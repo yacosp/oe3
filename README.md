@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/yacosp/oe3.png?label=ready&title=Ready)](https://waffle.io/yacosp/oe3?utm_source=badge)
 # oe3
 
 **oe3:afol** (2004-2008, 2017-)
