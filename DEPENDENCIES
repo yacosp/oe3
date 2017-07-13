@@ -1,0 +1,16 @@
+--------------------------------------------------------------------------------
+DEPENDENCIES
+--------------------------------------------------------------------------------
+
+java 1.4?
+gnu c coding env
+csound4...?
+
+--------------------------------------------------------------------------------
+most of the code was developed on debian (woody+sid?) using java and a bit of c 
+and csound. this was about fourteen years ago now, so i don't remember versions 
+or dependencies. i do remember hating java's guts most of the time, so oe3 is 
+pure python poetry ;-)
+
+some of the programs output midi files, some of which were edited using 
+propellerhead's reason, and then mixed using protools.
