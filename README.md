@@ -1,4 +1,3 @@
-[![Stories in Ready](https://badge.waffle.io/yacosp/oe3.png?label=ready&title=Ready)](https://waffle.io/yacosp/oe3?utm_source=badge)
 # oe3
 
 **oe3:afol** (2004-2008, 2017-)
@@ -13,3 +12,5 @@ all software licensed under the terms of the GNU General Public License:
 
 all documentation, notes, ideas, graphics and sounds are licensed under the Creative Commons Attribution-ShareAlike 4.0 International License:  
 [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
+
+[![Stories in Ready](https://badge.waffle.io/yacosp/oe3.png?label=ready&title=Ready)](https://waffle.io/yacosp/oe3?utm_source=badge)
