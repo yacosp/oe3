@@ -2,15 +2,17 @@
 DEPENDENCIES
 --------------------------------------------------------------------------------
 
-java 1.4?
-gnu c coding env
-csound4...?
+python 2.7, hopefully python3 real soon now
+enscribe 0.1.0 (http://jbd.zayda.net/enscribe/)
+sox 14.4.1
+ecasound 2.9.1
+csound 6.08
+oggenc / vorbis tools 1.4
 
---------------------------------------------------------------------------------
-most of the code was developed on debian (woody+sid?) using java and a bit of c 
-and csound. this was about fourteen years ago now, so i don't remember versions 
-or dependencies. i do remember hating java's guts most of the time, so oe3 is 
-pure python poetry ;-)
+lots of python dependencies, promise i will have a working requirements.txt for 
+[oe3.1:idwgu](https://github.com/yacosp/oe3/milestone/2), see 
+[issue #7](https://github.com/yacosp/oe3/issues/7).
 
-some of the programs output midi files, some of which were edited using 
-propellerhead's reason, and then mixed using protools.
+development is currently done on debian stretch and ubuntu trusty (on 
+windoze!). there may be some other dependency i am forgetting about, just ask 
+yaco@yaco.net.
