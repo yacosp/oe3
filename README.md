@@ -15,8 +15,8 @@ objectives:
 - [x] decent performing live
 
 enhancements:
-- [ ] modernize 2007 code (oe3.1:idwgu)
-- [ ] more interesting sounds (oe3.5:digi80s)
+- [ ] modernize 2007 code ([oe3.0.1:bleu](https://github.com/yacosp/oe3/milestone/1), [oe3.1:idwgu](https://github.com/yacosp/oe3/milestone/2))
+- [ ] more interesting sounds ([oe3.5:digi80s](https://github.com/yacosp/oe3/milestone/3))
 
 problems:
 - too human-dependent! (so... [oe4:nanoclts](https://github.com/yacosp/oe4))
