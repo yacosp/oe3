@@ -5,10 +5,11 @@
 third prototype for _oveja eléctrica_, an ongoing project with the goal of creating an artificial composer.  
 copyright (c) 2003-2017 Santiago Peresón
 
-[![Ready](https://badge.waffle.io/yacosp/oe3.png?label=ready&title=Ready)](https://waffle.io/yacosp/oe3?utm_source=badge) [![In Progress](https://badge.waffle.io/yacosp/oe3.svg?label=in%20progress&title=In%20Progress)](http://waffle.io/yacosp/oe3) [![In Progress](https://badge.waffle.io/yacosp/oe3.svg?label=done&title=Done)](http://waffle.io/yacosp/oe3)
-
-
 _adult fan of..._
+
+-------
+
+[![Ready](https://badge.waffle.io/yacosp/oe3.png?label=ready&title=Ready)](https://waffle.io/yacosp/oe3?utm_source=badge) [![In Progress](https://badge.waffle.io/yacosp/oe3.svg?label=in%20progress&title=In%20Progress)](http://waffle.io/yacosp/oe3)
 
 objectives:
 - [x] able to learn
@@ -21,8 +22,7 @@ enhancements:
 problems:
 - too human-dependent! (so... [oe4:nanoclts](https://github.com/yacosp/oe4))
 
-
-
+-------
 
 all software licensed under the terms of the GNU General Public License:  
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
