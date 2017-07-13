@@ -1,13 +1,14 @@
-# oveja-electrica
+# oe3
 
-![oe4](http://blog.yaco.net/wp-content/uploads/2008/08/oe4-thumb.gif)
+**oe3:afol** (2004-2008, 2017-)
 
-oveja eléctrica es un proyecto en curso cuyo objetivo es crear un compositor artificial: un sistema que, mediante procesos existentes en una o más computadoras, sea capaz de crear música de manera intencional, no aleatoria e independiente de toda influencia humana. oveja eléctrica recibió el primer premio en la categoría proyecto multidisciplinario experimental (premio limb0 2003) del museo de arte moderno de buenos aires.
+third prototype for _oveja eléctrica_, an ongoing project with the goal of creating an artificial composer.  
+copyright (c) 2003-2017 Santiago Peresón
 
-[conferencia sobre oveja eléctrica](http://blog.yaco.net/public/medialab-video/) (medialab-prado, madrid, 2008).
 
----
+all software licensed under the terms of the GNU General Public License:  
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-oveja eléctrica (electric sheep) is an ongoing project with the goal of creating an artificial composer: a system that, through processes spawned inside one or more computers, will be able to write music in a non-random, independent way, and with the least possible influence by the programmer/meta-composer’s tastes or aesthetic criteria. oveja eléctrica received the first prize in the multidisciplinary experimental project category (2003 limb0 prize) from the buenos aires museum of modern art.
 
-[lecture about oveja eléctrica in spanish](http://blog.yaco.net/public/medialab-video/) (medialab-prado, madrid, 2008).
+all documentation, notes, ideas, graphics and sounds are licensed under the Creative Commons Attribution-ShareAlike 4.0 International License:  
+[![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
