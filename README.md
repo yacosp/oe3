@@ -22,7 +22,7 @@ milestones:
 - hiatus: 2009 to 2016
 
 people & orgs:  
-[sofía](http://blog.yaco.net/in-memoriam/), [azul](http://azuldemadrugada.tumblr.com), [jorge haro](http://www.jorgeharo.com.ar/) / [museo de arte moderno de buenos aires](http://www.museomoderno.org/), [fundación telefónica](http://www.fundaciontelefonica.com.ar/), [christian galarreta](http://sajjra.net/chrs/) / [aloardí](http://www.aloardi.org/), [fermín](http://blog.yaco.net/in-memoriam/), [juan miguel santos](https://www.itba.edu.ar/la-universidad/docentes/juan-miguel-santos/), lucas, [javier piñango](http://www.experimentaclub.com/i_r_real.htm) / [experimentaclub](http://www.experimentaclub.com/fest08.htm), [alma laprida](http://almalaprida.com.ar/)
+[azul](http://azuldemadrugada.tumblr.com), [fermín](http://blog.yaco.net/in-memoriam/), [jorge haro](http://www.jorgeharo.com.ar/), [christian galarreta](http://sajjra.net/chrs/) / [aloardí](http://www.aloardi.org/), [juan miguel santos](https://www.itba.edu.ar/la-universidad/docentes/juan-miguel-santos/), lucas, [javier piñango](http://www.experimentaclub.com/i_r_real.htm) / [experimentaclub](http://www.experimentaclub.com/fest08.htm), [alma laprida](http://almalaprida.com.ar/)
 
 enhancements:
 - [ ] modernize 2007 code ([oe3.0.1:bleu](https://github.com/yacosp/oe3/milestone/1), [oe3.1:idwgu](https://github.com/yacosp/oe3/milestone/2))
