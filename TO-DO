@@ -1,0 +1,20 @@
+-------------------------------------------------------------------------------
+oe3:afol TO-DO
+-------------------------------------------------------------------------------
+
+see https://github.com/yacosp/oveja-electrica/issues
+
+-------------------------------------------------------------------------------
+old to-do list:
+
+* maper!
+* filters!
++ longer songs
++ faster bustrof
++ autorun (incl. dead time song player?)
++ caches
++ song names!
+- fix _mix_tracks sgdur
+- display para vivo (incl. atu)
+- tryall ratio en _intra_choice_ranking?
+- data structures doc
