@@ -1,0 +1,38 @@
+-------------------------------------------------------------------------------
+oe3 lib/oe3/test/comp_spectrofoto.doctest
+test file for the oe3.comp.spectrofoto module
+-------------------------------------------------------------------------------
+
+>>> from oe3.comp import spectrofoto
+>>> from pprint import pformat
+
+-------------------------------------------------------------------------------
+Spectrofoto():
+
+
+
+-------------------------------------------------------------------------------
+History():
+
+>>> h = spectrofoto.History()
+>>> h.append(({'red_min': 44, 'red_max': 77, 'num_images': 11},
+... {'sort': ('median_l', 37), 'sileces': ('keep', 42)}, 3))
+>>> h.append(({'red_min': 23, 'red_max': 47, 'num_images': 7},
+... {'sort': ('median_l', 54), 'silences': ('delete', 32)}, 0))
+>>> h.append(({'red_min': 11, 'red_max': 78, 'num_images': 17},
+... {'sort': ('none', 15), 'silences': ('crop', 12)}, -1))
+>>> print pformat(h)
+[({'red_min': 44, 'red_max': 77, 'num_images': 11},
+  {'sort': ('median_l', 37), 'sileces': ('keep', 42)},
+  3),
+ ({'red_min': 23, 'red_max': 47, 'num_images': 7},
+  {'sort': ('median_l', 54), 'silences': ('delete', 32)},
+  0),
+ ({'red_min': 11, 'red_max': 78, 'num_images': 17},
+  {'sort': ('none', 15), 'silences': ('crop', 12)},
+  -1)]
+>>> h.aspect_history('red_max', 'sort')
+[(77, 'median_l', 3), (47, 'median_l', 0), (78, 'none', -1)]
+>>> print pformat(h.choice_history('sort', ['median_l']))
+[({'sort': ('median_l', 37), 'sileces': ('keep', 42)}, 3),
+ ({'sort': ('median_l', 54), 'silences': ('delete', 32)}, 0)]

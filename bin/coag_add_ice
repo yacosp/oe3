@@ -1,0 +1,128 @@
+#!/usr/bin/python2
+# -*- backup-inhibited: true -*-
+#
+# oveja electrica - oe3.0.1:bleu
+# copyright (c) 2003-2017 santiago pereson <yaco@yaco.net>
+# http://yaco.net/oe/
+#
+# this file is part of 'oe3', which is released under the gnu general public
+# license, version 3. see LICENSE for full license details.
+#
+
+"""add ImageCollEstim objects to the coag repository (var/estim)
+
+usage: bin/coag_add_ice [options] <image> ...
+
+options:
+  -n NAME, --name=NAME    estim name
+  -s TEXT, --source=TEXT  estim source
+  -p TEXT, --prefix=TEXT  individual image source prefix (basename appended)
+  -d DATE, --date=DATE    date ('YYYY-MM-DD HH:MM:SS')
+  -D, --all-dates         use estim date for images
+  -h, --help              show this help message and exit
+
+if prefix is not defined, all images share the estim's source.
+"""
+
+
+from __future__ import division
+
+import bz2
+import getopt
+import os
+import pprint
+import sys
+
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../lib'))
+from oe3      import oe3_path, utils
+from oe3.coag import estim
+
+
+#------------------------------------------------------------------------------
+def main(argv=None):
+    if argv is None: argv = sys.argv
+
+    # parse command line options
+    try:
+        opts, args = getopt.getopt(argv[1:], 'n:s:p:d:Dh',
+                                   ['name=', 'source=', 'prefix=',
+                                    'date=', 'all-dates', 'help'])
+    except getopt.error, msg:
+        print msg
+        print __doc__
+        return 2
+
+    # set defaults
+    name = ''
+    source, prefix = None, None
+    date, alldates = None, False
+
+    # process options
+    for o, a in opts:
+        if o in ('-n', '--name'):
+            name = a
+        elif o in ('-s', '--source'):
+            source = a
+        elif o in ('-p', '--prefix'):
+            prefix = a
+        elif o in ('-d', '--date'):
+            date = a
+        elif o in ('-D', '--all-dates'):
+            alldates = True
+        if o in ('-h', '--help'):
+            print __doc__
+            return 0
+
+    # need at least one image!
+    if len(args) == 0:
+        print "won't create an empty estim!"
+        exit(1)
+
+    # create estim
+    print 'creating estim ...'
+    ice = estim.ImageCollEstim()
+    ice.name   = name
+    ice.source = source
+    ice.date   = date
+
+    # add images
+    print 'adding images ...'
+    for arg in args:
+        print "   " + arg
+        if prefix is not None:
+            img_src = prefix + os.path.basename(arg)
+        elif source is not None:
+            img_src = source
+        else:
+            img_src = None
+        img_date = alldates and ice.date or None
+        ice.add_image(arg, source=img_src, date=img_date)
+
+    # save estim
+    ice_path = os.path.join(oe3_path, 'var/estim/%s.pyd.bz2' % ice.id)
+    print 'saving estim to %s ...' % ice_path
+    ice.save(ice_path)
+
+    # update index
+    print 'updating index ...'
+    idx_path = os.path.join(oe3_path, 'var/estim/index.pyd.bz2')
+    try:
+        idx = utils.load_bzdict(idx_path)
+    except:
+        idx = []
+    idx.append({'id':   ice.id,
+                'name': ice.name,
+                'type': ice.type,
+                'size': len(ice.images),
+                'used': [],
+                'data_path': ice.data_path,
+                'meta_path': ice_path})
+    utils.save_bzdict(idx_path, idx)
+
+    print 'done.'
+    return 0
+
+
+#------------------------------------------------------------------------------
+if __name__ == "__main__":
+    sys.exit(main())

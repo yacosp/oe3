@@ -1,0 +1,129 @@
+-------------------------------------------------------------------------------
+oe3 lib/oe3/test/utils.doctest
+test file for the oe3.utils module
+-------------------------------------------------------------------------------
+
+>>> from oe3 import utils
+
+-------------------------------------------------------------------------------
+max_key():
+
+>>> utils.max_key({'a': 3, 'b': 7, 'c': 21})
+'c'
+>>> utils.max_key({'a': '27', 'b': 'xxx', 'c': '21'})
+'b'
+>>> utils.max_key({'a': 3, 'b': 70.0, 'c': '21'})
+'c'
+>>> utils.max_key({'x': 3})
+'x'
+>>> utils.max_key({})
+Traceback (most recent call last):
+    ...
+ValueError: arg is an empty dict
+>>> utils.max_key('lerolero')
+Traceback (most recent call last):
+    ...
+ValueError: arg is not a dictionary
+
+-------------------------------------------------------------------------------
+adict():
+
+>>> ad = utils.adict({'a': 1})
+>>> ad['b'] = 2
+>>> ad.c = 2
+>>> ad
+{'a': 1, 'c': 2, 'b': 2}
+>>> ad['a']
+1
+>>> ad.b
+2
+
+-------------------------------------------------------------------------------
+load_bzdict() & save_bzdict()
+
+>>> d = {'uno': 1, 'dos': 'lerolero', 'tres': 4.45}
+>>> utils.save_bzdict('/tmp/bzdict_test.bz2', d)
+>>> utils.load_bzdict('/tmp/bzdict_test.bz2')
+{'dos': 'lerolero', 'tres': 4.4500000000000002, 'uno': 1}
+>>> import Image
+>>> d['err'] = Image.new('RGB', (100,100))
+>>> utils.save_bzdict('/tmp/bzdict_test.bz2', d)
+Traceback (most recent call last):
+    ...
+ValueError: dict contains non-printable data
+
+-------------------------------------------------------------------------------
+reduce_image(), rgb2hsl() & image_hsl_bands()
+
+>>> import Image
+>>> img = Image.open('oe3/test/35074687914_fc4c469bf0_z.jpg')
+>>> redux = utils.reduce_image(img, 5, 5, 5)
+>>> list(redux.getdata())[:11]
+[153, 204, 204, 204, 153, 204, 204, 204, 153, 153, 204]
+>>> utils.rgb2hsl(255, 0, 0)
+(0.0, 1.0, 0.5)
+>>> hsl = utils.image_hsl_bands(img)
+>>> hsl[0][:3]
+[0.57870370370370372, 0.57990867579908667, 0.58333333333333337]
+
+-------------------------------------------------------------------------------
+hml_find_limits(), hml_value_limits(), hml_split_list() & hml_find_zone():
+
+>>> lims = utils.hml_find_limits([1, 2, 3, 5, 7, 11, 13])
+>>> lims
+(1, 5, 9, 13)
+>>> utils.hml_value_limits(lims, 8, fullrange=(1, 13))
+(5, 9)
+>>> utils.hml_split_list(['none', 'gaussian', 'maper', 'shuffle', 'uniform'])
+[['none'], ['gaussian', 'maper', 'shuffle'], ['uniform']]
+>>> utils.hml_find_zone(['none', 'gaussian', 'maper', 'shuffle', 'uniform'],
+... 'maper')
+0
+>>> utils.hml_find_zone(['none', 'gaussian', 'maper', 'shuffle', 'uniform'],
+... 'uniform')
+1
+>>> utils.hml_find_zone(['none', 'gaussian', 'maper', 'shuffle', 'uniform'],
+... 'lerolero') is None
+True
+
+-------------------------------------------------------------------------------
+distance_n1():
+
+>>> utils.distance_n1([3, 3, 3, 3, 3, 3, 3, 3, 3], [1, 3, 3, 3, 5, 3, 3, 3, 2])
+5
+
+-------------------------------------------------------------------------------
+hz2px() and px2hz:
+
+>>> utils.hz2px(440, (0, 87), (27.5, 4186))   # piano range. A4: note 48
+48
+>>> utils.px2hz(39, (0, 87), (27.5, 4186))    # note 39: C4
+262
+>>> utils.hz2px(440, (0, 400))   # audible range (default), 400px height
+174
+>>> utils.px2hz(0, (0, 400))
+20
+>>> utils.px2hz(100, (0, 400))
+118
+>>> utils.px2hz(200, (0, 400))
+693
+>>> utils.px2hz(300, (0, 400))
+4078
+>>> utils.px2hz(400, (0, 400))
+24000
+
+-------------------------------------------------------------------------------
+mean() & stddev():
+
+>>> utils.mean([3, 7, 11, 17, 21, 31, 41])
+18.714285714285715
+>>> utils.stddev([3, 7, 11, 17, 21, 31, 41])
+13.536546651125436
+
+-------------------------------------------------------------------------------
+datestr() & tstamp():
+
+>>> utils.datestr(56923200)
+'1971-10-21 20:00:00'
+>>> utils.tstamp(56923200)
+'19711021.200000'

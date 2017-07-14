@@ -1,0 +1,38 @@
+#!/usr/bin/python2
+# -*- backup-inhibited: true -*-
+#
+# oveja electrica - oe3.0.1:bleu
+# copyright (c) 2003-2017 santiago pereson <yaco@yaco.net>
+# http://yaco.net/oe/
+#
+# this file is part of 'oe3', which is released under the gnu general public
+# license, version 3. see LICENSE for full license details.
+#
+
+"""run all doctests"""
+
+
+from __future__ import division
+
+import doctest
+import os
+
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../lib'))
+from oe3 import oe3_path
+
+
+#------------------------------------------------------------------------------
+def run_all():
+    """run all doctests"""
+    os.chdir(oe3_path + '/lib')
+    dirlist = os.listdir(oe3_path + '/lib/oe3/test')
+    dirlist.sort()
+    for f in dirlist:
+        if f.endswith('.doctest'):
+            fail, count = doctest.testfile('../lib/oe3/test/' + f,
+                                           module_relative=False)
+            if fail == 0: print f + ': no errors.'
+
+#------------------------------------------------------------------------------
+if __name__ == '__main__':
+    run_all()
