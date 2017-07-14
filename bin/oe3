@@ -1,0 +1,192 @@
+#!/usr/bin/python2
+# -*- backup-inhibited: true -*-
+#
+# oveja electrica - oe3.0.1:bleu
+# copyright (c) 2003-2017 santiago pereson <yaco@yaco.net>
+# http://yaco.net/oe/
+#
+# this file is part of 'oe3', which is released under the gnu general public
+# license, version 3. see LICENSE for full license details.
+#
+
+"""oe3 runner
+
+usage: bin/oe3 [options]
+
+options:
+  -c, --choices=CHOICES     forced choices, ie: 'timbres:bps,sort:none'
+  -d, --pdb                 run through pdb
+  -e, --estim=ESTIM         use ESTIM instead of a random one
+  -i, --show-images         show images instead of reduxes
+  -l, --list-songs          list all songs with rewards - TO-DO!
+  -m, --min-song-dur=S      min song dur (seconds)
+  -M, --max-song-dur=S      max song dur (seconds)
+  -n, --count               number of times to run
+  -p, --play=SONG           play a song and ask for reward
+  -r, --reward=SONG:REWARD  (re)set the reward for one song - TO-DO!
+  -R, --no-reward           don't wait for reward
+  -V, --no-viewer           don't run viewer
+  -h, --help                show this help message and exit
+"""
+
+
+from __future__ import division
+
+import gc
+import getopt
+import logging
+import os
+import pdb
+import sys
+import time
+from pprint import pformat
+
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/../lib"))
+from oe3 import viewer
+from oe3.coag import core as coag
+from oe3.coag import estim
+from oe3.comp import spectrofoto
+from oe3.crit import REWARDS
+from oe3.utils import shexec
+
+sf  = None
+sv  = None
+log = logging.getLogger('oe3')
+
+#------------------------------------------------------------------------------
+def main(argv=None):
+  if argv is None: argv = sys.argv
+
+  # parse command line options
+  try:
+    opts, args = getopt.getopt(argv[1:],
+                               "c:de:im:M:n:RVh",
+                               ["choices=", "pdb", "estim=",
+                                "show-images", "min-song-dur=",
+                                "max-song-dur=", "count=", "no-reward",
+                                "no-viewer", "help"])
+  except getopt.error, msg:
+    print msg
+    print __doc__
+    return 2
+
+  # set defaults
+  choices =     None
+  use_pdb =     False
+  fixed_ice =   None
+  show_images = False
+  min_sd =      None
+  max_sd =      None
+  count =       1
+  no_reward =   False
+  run_viewer =  True
+
+  # process options
+  for o, a in opts:
+    if o in ("-c", "--choices"):
+      choices = dict([c.split(":") for c in a.split(",")])
+    elif o in ("-d", "--pdb"):
+      use_pdb = True
+    elif o in ("-e", "--estim"):
+      fixed_ice = estim.ImageCollEstim(a)
+    elif o in ("-i", "--show-images"):
+      show_images = True
+    elif o in ("-m", "--min-song-dur"):
+      min_sd = int(a)
+    elif o in ("-M", "--max-song-dur"):
+      max_sd = int(a)
+    elif o in ("-n", "--count"):
+      count = int(a)
+    elif o in ("-R", "--no-reward"):
+      no_reward = True
+    elif o in ("-V", "--no-viewer"):
+      run_viewer = False
+    elif o in ("-h", "--help"):
+      print __doc__
+      return 0
+
+  # run viewer
+  #if run_viewer:
+  #    _run_viewer(ice=ice, show_images=show_images)
+
+  # run oe3
+  if use_pdb: pdb.set_trace()
+  cg = coag.Coag()
+  for i in range(count):
+    log.info("=" * 140)
+    log.info("starting new song...")
+    print "\n" + ("-" * 79)
+    if fixed_ice == None:
+      log.info("choosing estim...")
+      ice = cg.rand_estim('type', 'imagecoll')
+    else:
+      ice = fixed_ice
+    print "estim: %s (%s)" % (ice.id, ice.name)
+    try:
+      _run_spectrofoto(ice, choices, show_images,
+                       min_sd, max_sd, no_reward)
+    except KeyboardInterrupt:
+      log.warning("interrupted!")
+      return 0
+  return 0
+
+#------------------------------------------------------------------------------
+def _run_spectrofoto(ice=None, choices=None, show_images=False, min_sd=None,
+                   max_sd=None, no_reward=False):
+  """create one song"""
+
+
+  global sf
+  gc.collect()
+  log.info("running comp...")
+  sf = spectrofoto.Spectrofoto()
+  sf.conf['show_images'] = show_images
+  if min_sd is not None: sf.conf['min_song_dur'] = min_sd
+  if max_sd is not None: sf.conf['max_song_dur'] = max_sd
+  sg = sf.create(ice, choices=choices)
+
+  _play_song(sg)
+  if not no_reward:
+    sf.learn(sg, _get_reward())
+
+#------------------------------------------------------------------------------
+def _play_song(song):
+  """play a song"""
+
+  log.info("playing song...")
+  print "song:", song.id
+  mdur = max(t['dur'] for t
+             in song.tracklist.values()
+             if t is not None)
+  print "duration: %2d:%02d\n" % (mdur // 60, int(mdur) % 60)
+  print "playing song: %s" % song.sfile
+  shexec("ogg123 %s", song.sfile)
+  print
+  time.sleep(.5)
+  try:
+    shexec("killall xview")
+  except:
+    pass
+  time.sleep(.5)
+
+#------------------------------------------------------------------------------
+def _get_reward():
+  """interactive get reward"""
+  rwd = raw_input("reward [12345dq] ? ")
+  while rwd not in "12345dq":
+    rwd = raw_input("reward [12345dq] ? ")
+  if rwd == "d":
+    rwd = ""
+    pdb.set_trace()
+  if rwd in ("q", ""): sys.exit(2)
+  return (REWARDS[int(rwd) - 1], None, None)
+
+#------------------------------------------------------------------------------
+def _run_viewer(ice=None, show_images=False):
+  """fork oe3 viewer"""
+  # XXX to be done
+  pass
+
+#------------------------------------------------------------------------------
+if __name__ == "__main__":
+  sys.exit(main())

@@ -1,0 +1,111 @@
+#!/usr/bin/python2
+# -*- backup-inhibited: true -*-
+#
+# oveja electrica - oe3.0.1:bleu
+# copyright (c) 2003-2017 santiago pereson <yaco@yaco.net>
+# http://yaco.net/oe/
+#
+# this file is part of 'oe3', which is released under the gnu general public
+# license, version 3. see LICENSE for full license details.
+#
+# based on a recipe by Neil Blakey-Milner
+# http://mithrandr.moria.org/blog/147.html
+#
+
+"""
+oe3 log tail colorized viewer
+
+usage: tail.py <file>
+"""
+
+import curses
+import os
+import re
+import sys
+import time
+from optparse import OptionParser
+from textwrap import TextWrapper
+
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../lib'))
+from term import TerminalController
+
+
+term = TerminalController()
+cols = term.COLS - 3
+date_re = re.compile(r'^[0-9]{8}\.[0-9]{6}\.[0-9]{3}')
+level = 'I'
+levelcolor = {'C': term.RED + term.BOLD, 'E': term.RED,
+              'W': term.YELLOW, 'I': term.NORMAL, 'D': term.CYAN}
+wrapper = TextWrapper(width=(term.COLS - 3), replace_whitespace=False,
+                      subsequent_indent='>> ')
+
+def handle_line(line):
+    global term, cols, date_re, level, levelcolor, wrapper
+    line = line.strip()
+    lline = len(line)
+    if lline == 0: return  # shortcircuit
+    if lline > cols: line = wrapper.fill(line)
+    if date_re.match(line):
+        level = line[27]
+        print ''.join([term.MAGENTA, line[:20],
+                       term.BLUE, term.BOLD, line[20:27], term.NORMAL,
+                       levelcolor[level], line[27:48],
+                       line[48:], term.NORMAL])
+    else:
+        print levelcolor[level] + '>> ' + line + term.NORMAL
+    return
+
+def tail_lines(fd, linesback = 10):
+    avgcharsperline = 75
+    while 1:
+        try:
+            fd.seek(-1 * avgcharsperline * linesback, 2)
+        except IOError:
+            fd.seek(0)
+        if fd.tell() == 0:
+            atstart = 1
+        else:
+            atstart = 0
+        lines = fd.read().split("\n")
+        if (len(lines) > (linesback+1)) or atstart:
+            break
+        avgcharsperline=avgcharsperline * 1.3
+    if len(lines) > linesback:
+        start = len(lines) - linesback - 1
+    else:
+        start = 0
+    return lines[start:len(lines)-1]
+
+def do_tail(filename, lines, follow, func = handle_line):
+    fd = open(filename, 'r')
+    for line in tail_lines(fd, lines):
+        func(line + "\n")
+    if not follow: return
+    while 1:
+        where = fd.tell()
+        line = fd.readline()
+        if not line:
+            fd_results = os.fstat(fd.fileno())
+            try:
+                st_results = os.stat(filename)
+            except OSError:
+                st_results = fd_results
+            if st_results[1] == fd_results[1]:
+                time.sleep(1)
+                fd.seek(where)
+            else:
+                fd = open(filename, 'r')
+        else:
+            func(line)
+
+def main(argv = sys.argv):
+    parser = OptionParser()
+    parser.add_option("-n", "--number", action="store", type="int", dest = "number", default=10)
+    parser.add_option("-f", "--follow", action="store_true", dest = "follow", default=0)
+    (options, args) = parser.parse_args()
+    do_tail(args[0], options.number, options.follow, handle_line)
+
+if __name__ == "__main__":
+    try:
+        main(sys.argv)
+    except KeyboardInterrupt: pass

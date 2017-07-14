@@ -1,0 +1,9 @@
+; oe3/share/spectrofoto/mix.sco.pre
+
+; fade envelopes
+f1 0 8193 8 0  512 1 7168 1  512 0
+f2 0 8193 8 0 1024 1 6144 1 1024 0
+f3 0 8193 8 0 2048 1 4096 1 2048 0
+
+;i    mom      dur        source       amp   env
+;-  -------  -------  --------------  -----  ---

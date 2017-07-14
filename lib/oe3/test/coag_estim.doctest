@@ -1,0 +1,41 @@
+-------------------------------------------------------------------------------
+oe3 lib/oe3/test/coag_estim.doctest
+test file for the oe3.coag.estim module
+-------------------------------------------------------------------------------
+
+>>> from oe3.coag import estim
+
+-------------------------------------------------------------------------------
+Estim():
+
+>>> e1 = estim.Estim()
+>>> e1.type = 'base'
+>>> e1.type
+'base'
+>>> e1.save('/tmp/estim_test.oemd')
+>>> e2 = estim.Estim()
+>>> e2.load('/tmp/estim_test.oemd')
+>>> e2.type
+'base'
+
+-------------------------------------------------------------------------------
+ImageCollEstim():
+
+>>> ice = estim.ImageCollEstim()
+>>> ice.add_image('oe3/test/35074687914_fc4c469bf0_z.jpg', source='https://www.flickr.com/creativecommons/by-sa-2.0/')
+>>> ice.add_image('oe3/test/35874016126_9e307f8d14_z.jpg', source='https://www.flickr.com/creativecommons/by-sa-2.0/')
+>>> ice.add_image('oe3/test/35914454325_e713eb41ef_z.jpg', source='https://www.flickr.com/creativecommons/by-sa-2.0/')
+>>> len(ice.images)
+3
+>>> ice.images[0].info['name']
+'35074687914_fc4c469bf0_z.jpg'
+>>> ice.images[0].info['format']
+'JPEG'
+>>> ice.save('/tmp/ice_test.oemd')
+>>> ice2 = estim.ImageCollEstim('/tmp/ice_test.oemd')
+>>> len(ice2.images)
+3
+>>> ice2.images[0].info['name']
+'35074687914_fc4c469bf0_z.jpg'
+>>> ice2.images[0].info['format']
+'JPEG'
