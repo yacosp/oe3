@@ -2,16 +2,16 @@
 DEPENDENCIES
 --------------------------------------------------------------------------------
 
-python 2.7, hopefully python3 real soon now
-enscribe 0.1.0 (http://jbd.zayda.net/enscribe/)
-sox 14.4.1
-ecasound 2.9.1
-csound 6.08
-oggenc / vorbis tools 1.4
+python 2.7 (psf)
+enscribe 0.1.0 (gpl)
+sox 14.4.1 (gpl)
+ecasound 2.9.1 (gpl, bsd, lgpl)
+ecatools 2.9.1 (gpl, bsd, lgpl)
+csound 6.08 (lgpl)
+vorbis-tools 1.4 (gpl)
 
-lots of python dependencies, promise i will have a working requirements.txt for 
-[oe3.1:idwgu](https://github.com/yacosp/oe3/milestone/2), see 
-[issue #7](https://github.com/yacosp/oe3/issues/7).
+python-pil 4.0.0 (mit-like pil license)
+python-numpy 1.12.1 (psf, bsd)
 
 development is currently done on debian stretch and ubuntu trusty (on 
 windoze!). there may be some other dependency i am forgetting about, just ask 
