@@ -9,7 +9,9 @@ _adult fan of..._
 
 -------
 
-[![Ready](https://badge.waffle.io/yacosp/oe3.png?label=ready&title=Ready)](https://waffle.io/yacosp/oe3?utm_source=badge) [![In Progress](https://badge.waffle.io/yacosp/oe3.svg?label=in%20progress&title=In%20Progress)](http://waffle.io/yacosp/oe3)
+**oe3:afol** is a non-interactive music creation program. the basic use pattern is to run it, wait for it to create some noise, listen, and then give it a reward/valoration so the systen starts to get some experience.
+
+information about runnint the program for the first time can be found at docs/INSTALL. it should work on any recent GNU/Linux system, the DEPENDENCIES file can help in setting up the environment.
 
 objectives:
 - [x] able to learn
@@ -30,6 +32,8 @@ enhancements:
 
 problems:
 - too human-dependent! (so... [oe4:nanoclts](https://github.com/yacosp/oe4))
+
+[![Ready](https://badge.waffle.io/yacosp/oe3.png?label=ready&title=Ready)](https://waffle.io/yacosp/oe3?utm_source=badge) [![In Progress](https://badge.waffle.io/yacosp/oe3.svg?label=in%20progress&title=In%20Progress)](http://waffle.io/yacosp/oe3)
 
 -------
 
