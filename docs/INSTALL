@@ -2,18 +2,17 @@
 oe3 mini-howto
 --------------------------------------------------------------------------------
 
-1. run `bin/logtails -f var/log/oe3.log` on one term.
+0. install DEPENDENCIES
 
-2. if starting from a clean state, you should create at least one estim for the
-   comp to use, ie: `bin/coag_add_ice src/estim/oneras/*.jpg`, using a second
-   term.
+1. if starting from a clean state: create at least one estim, ie: 
+   `bin/coag_add_ice src/estim/oneras/*.jpg`
 
-3. run `bin/oe3` on your second term.
+2. run `bin/logtails -f var/log/oe3.log` on one term.
 
-4. check the log, wait, listen.
+3. run `bin/oe3` on a second term.
 
-5. reward the kid generously.
+4. check the log, wait, listen, reward generously.
 
-6. send me an email to yaco@yaco.net. yes, this is required :)
+5. send me an email to yaco@yaco.net. yes, this is required ;)
 
-7. explore the options, read the code, mess with it. have fun!
+6. explore options, read code, mess with it. have fun, keep sending emails!
