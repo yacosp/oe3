@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python2
 # -*- backup-inhibited: true -*-
 #
 # oveja electrica - oe3.0.1:bleu
@@ -79,14 +79,14 @@ def main(argv=None):
         exit(1)
 
     # create estim
-    print 'creating estim ...'
+    print 'creating estim...'
     ice = estim.ImageCollEstim()
     ice.name   = name
     ice.source = source
     ice.date   = date
 
     # add images
-    print 'adding images ...'
+    print 'adding images...'
     for arg in args:
         print "   " + arg
         if prefix is not None:
@@ -100,11 +100,11 @@ def main(argv=None):
 
     # save estim
     ice_path = os.path.join(oe3_path, 'var/estim/%s.pyd.bz2' % ice.id)
-    print 'saving estim to %s ...' % ice_path
+    print 'saving estim to %s...' % ice_path
     ice.save(ice_path)
 
     # update index
-    print 'updating index ...'
+    print 'updating index...'
     idx_path = os.path.join(oe3_path, 'var/estim/index.pyd.bz2')
     try:
         idx = utils.load_bzdict(idx_path)

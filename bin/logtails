@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python2
 # -*- backup-inhibited: true -*-
 #
 # oveja electrica - oe3.0.1:bleu
@@ -77,6 +77,9 @@ def tail_lines(fd, linesback = 10):
     return lines[start:len(lines)-1]
 
 def do_tail(filename, lines, follow, func = handle_line):
+    if not os.path.exists(filename):
+        print ''.join([term.RED, "logtails: waiting for file '", filename, "'..."])
+        while not os.path.exists(filename): time.sleep(1)
     fd = open(filename, 'r')
     for line in tail_lines(fd, lines):
         func(line + "\n")

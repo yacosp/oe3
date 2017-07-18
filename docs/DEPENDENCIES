@@ -10,9 +10,9 @@ ecatools 2.9.1 (gpl, bsd, lgpl)
 csound 6.08 (lgpl)
 vorbis-tools 1.4 (gpl)
 
-python-pil 4.0.0 (mit-like pil license)
-python-numpy 1.12.1 (psf, bsd)
+python libs are listed in the docs/python-requirements.txt file, ready to be
+installed using pip: `pip install -r docs/python-requirements.txt`
 
-development is currently done on debian stretch and ubuntu trusty (on 
-windoze!). there may be some other dependency i am forgetting about, just ask 
+development is currently done on debian stretch and ubuntu trusty (on
+windoze!). there may be some other dependency i am forgetting about, just ask
 yaco@yaco.net.
