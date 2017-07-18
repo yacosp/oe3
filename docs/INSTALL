@@ -4,7 +4,7 @@ oe3 mini-howto
 
 0. install DEPENDENCIES
 
-1. if starting from a clean state: create at least one estim, ie: 
+1. if starting from a clean state: create at least one estim, ie:
    `bin/coag_add_ice src/estim/oneras/*.jpg`
 
 2. run `bin/logtails -f var/log/oe3.log` on one term.

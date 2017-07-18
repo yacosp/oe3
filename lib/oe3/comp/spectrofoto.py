@@ -91,7 +91,7 @@ class Spectrofoto(object):
     os.chdir(self.song.tmpd)
     log.debug("   generating estim gallery")
     gal = self.viewer.gallery(self.song.estim.images, self.conf['show_images'])
-    gal.show(command=(self.conf['viewer_estim_cmd'] % estim.name))
+    #gal.show(command=(self.conf['viewer_estim_cmd'] % estim.name))
 
 
   # analyze estim -------------------------------------------------------------
@@ -394,7 +394,7 @@ class Spectrofoto(object):
     self.song.img_idx = [img.info['id'] for img in self.song.images]
     log.debug("   generating resorted estim gallery")
     gal = self.viewer.gallery(self.song.images, self.conf['show_images'])
-    gal.show(command=self.conf['viewer_procestim_cmd'])
+    #gal.show(command=self.conf['viewer_procestim_cmd'])
 
   def _resort_none(self): pass
 
