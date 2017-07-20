@@ -1,0 +1,52 @@
+# oe3 etc/voe3-bashrc   -*- mode: sh -*-
+
+# colors
+BrightBlue="\e[1;34m"
+Blue="\e[0;34m"
+ResetColor="\e[0;0m"
+
+# activate virtualenv
+source env/bin/activate
+
+# voe3 prompt
+export PS1="${BrightBlue}\A▸${ResetColor} "
+
+# motd / header
+anatta=`cat var/state/anatta | cut -d' ' -f1`
+born=`cat var/state/anatta | cut -d' ' -f2-3`
+opus=`ls var/opus/*.tar | wc -l`
+estims=`ls var/estim/*.tar | wc -l`
+printf -v h1 'oe3.1:idwgu tmux runner %57s' "oe3:${anatta} [${estims}e·${opus}o]"
+printf -v h2 '%80s' "${born}"
+echo -e "${BrightBlue}${h1}"
+echo -e "${Blue}${h2}${ResetColor}"
+
+# clear env
+unset BrightBlue Blue ResetColor anatta born opus estims
+
+# useful .bashrc stuff
+source /etc/bash_completion
+
+alias l='ls -lhF --color=auto'
+alias l.='ls -lhFd .* --color=auto'
+alias la='ls -lahF --color=auto'
+alias lf='ls -F --color=auto'
+alias laf='ls -aF --color=auto'
+alias tree='tree -F'
+alias te='emacs -nw'
+alias rrmbk='find ./ \( -name \*\~ -o -name \#\* \) -exec rm \{\} \;'
+alias dum='du -sm * | sort -g -r'
+alias ..='cd ..'
+alias co3='cd ~/oe/oe3'
+
+pl() {
+    ps_cmd="ps -ewo pid,ppid,user,%cpu,%mem,time,cmd --sort pid"
+    [ -z $1 ] && $ps_cmd -H f || $ps_cmd | grep $1 | grep -v grep
+}
+fixmodes() {
+    find . -type d -exec chmod 775 \{\} \;
+    find . -type f -exec chmod 664 \{\} \;
+}
+soxinfo() {
+    sox -V "$1" -n
+}

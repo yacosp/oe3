@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# -*- backup-inhibited: true -*-
+#
+# oveja electrica - oe3.0.1:bleu
+# copyright (c) 2003-2017 santiago pereson <yaco@yaco.net>
+# http://yaco.net/oe/
+#
+# this file is part of 'oe3', which is released under the gnu general public
+# license, version 3. see LICENSE for full license details.
+#
+
+# voe3
+# tmux-based e3 runner
+#
+# usage: bin/voe3
+#
+
+tmux -f etc/voe3t-tmux.conf \
+     new-session  -svoe3 -nvoe3 'bin/logtails -n100 -f var/log/oe3.log'\; \
+     split-window -bv -l11      'bin/estimwatch'\; \
+     split-window -bh -l81      'bash --rcfile etc/voe3t-bashrc'
