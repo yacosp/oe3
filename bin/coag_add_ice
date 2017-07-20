@@ -9,7 +9,8 @@
 # license, version 3. see LICENSE for full license details.
 #
 
-"""add ImageCollEstim objects to the coag repository (var/estim)
+"""coag_add_ice
+add ImageCollEstim objects to the coag repository (var/estim)
 
 usage: bin/coag_add_ice [options] <image> ...
 

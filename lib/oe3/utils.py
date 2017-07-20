@@ -120,11 +120,12 @@ def reduce_image(image, width, height, levels=None, normalize=True):
 
 def _reduce_depth_table(levels):
   """posterize filter table for a grayscale image .point() function"""
+  # XXX this is reducing to levels + 1 ?
   lstep = 256 / levels
   vstep = 255 / (levels - 1)
   ft    = []
   for i in range(levels):
-    ft    += [int(vstep * i)] * int(lstep)
+    ft += [int(vstep * i)] * int(lstep)
     if lstep * (i + 1) > len(ft): ft += [int(vstep * i)]
   return ft
 

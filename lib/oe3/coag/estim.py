@@ -38,7 +38,7 @@ class Estim(object):
     self.type    = 'base'           # ie: 'imagecoll'
     self.source  = None             # ie: 'http://www.twexus.com/
     self.date    = utils.datestr()  # date this estim was acquired
-    self.used    = []               # list of songs that used this estim
+    self.used    = []               # XXX list of songs that used this estim
     self.data_path = None           # data file path (relative)
     if meta_path is not None: self.load(meta_path)
 

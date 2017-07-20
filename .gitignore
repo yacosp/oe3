@@ -9,6 +9,7 @@ var/state/*
 !var/state/README
 tmp/comp/*
 !tmp/comp/README
+dev/
 
 # backup files
 *~
@@ -17,6 +18,14 @@ tmp/comp/*
 __pycache__/
 *.py[cod]
 *$py.class
+
+# env
+.env
+.envrc
+.venv
+venv/
+env/
+ENV/
 
 # c extensions
 *.so
@@ -39,12 +48,3 @@ wheels/
 # installer logs
 pip-log.txt
 pip-delete-this-directory.txt
-
-
-# env
-.env
-.envrc
-.venv
-venv/
-env/
-ENV/

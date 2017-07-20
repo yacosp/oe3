@@ -9,7 +9,8 @@
 # license, version 3. see LICENSE for full license details.
 #
 
-"""oe3 runner
+"""oe3
+oe3 comp runner
 
 usage: bin/oe3 [options]
 
@@ -127,7 +128,7 @@ def main(argv=None):
                        min_sd, max_sd, no_reward)
     except KeyboardInterrupt:
       log.warning("interrupted!")
-      return 0
+      return 130
   return 0
 
 #------------------------------------------------------------------------------
