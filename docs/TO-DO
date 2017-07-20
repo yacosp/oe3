@@ -4,26 +4,25 @@ oe3:afol TO-DO
 
 (see https://github.com/yacosp/oveja-electrica/issues)
 
-- direnv
-  * source env/bin/activate
-  * verify auto-deactivate
-  - alias tree to hide 
-- pretty shell
-  * show virtualenv
-  + show git info
-  + otres
+-------------------------------------------------------------------------------
+ideas sueltas:
+
+* mix/master: add basic channel and master strips (ladspa/lv2), learn!
+  * learn by remixing own stuff, other's multitracks, etc.
++ oe3.2:4ap - BEAT! (add a "beat" soundgen, glitchy?, rest floats around)
+
 
 -------------------------------------------------------------------------------
 old to-do list:
 
-* maper!
-* filters!
+* maper! [issue #33]
+* filters! [???]
 + longer songs
-+ faster bustrof
-+ autorun (incl. dead time song player?)
-+ caches
-+ song names!
-- fix _mix_tracks sgdur
-- display para vivo (incl. atu)
-- tryall ratio en _intra_choice_ranking?
-- data structures doc
++ faster bustrof [issue #11]
++ autorun (incl. dead time song player?) [issue #37]
++ caches [issue #11]
++ song names! [issue #]
+- fix _mix_tracks sgdur [??? issue #34]
+- display para vivo (incl. atu) [issue #40]
+- tryall ratio en _intra_choice_ranking? [??? issue #34]
+- data structures doc [issue #41]
