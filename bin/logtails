@@ -78,7 +78,9 @@ def tail_lines(fd, linesback = 10):
 
 def do_tail(filename, lines, follow, func = handle_line):
     if not os.path.exists(filename):
-        print ''.join([term.RED, "logtails: waiting for file '", filename, "'..."])
+        print ''.join(
+            [term.RED, "logtails: waiting for file '", filename, "'..."]
+        )
         while not os.path.exists(filename): time.sleep(1)
     fd = open(filename, 'r')
     for line in tail_lines(fd, lines):
@@ -103,8 +105,10 @@ def do_tail(filename, lines, follow, func = handle_line):
 
 def main(argv = sys.argv):
     parser = OptionParser()
-    parser.add_option("-n", "--number", action="store", type="int", dest = "number", default=10)
-    parser.add_option("-f", "--follow", action="store_true", dest = "follow", default=0)
+    parser.add_option("-n", "--number", action="store", type="int",
+                      dest="number", default=10)
+    parser.add_option("-f", "--follow", action="store_true",
+                      dest="follow", default=0)
     (options, args) = parser.parse_args()
     if len(args) != 1:
         print __doc__
@@ -115,5 +119,4 @@ if __name__ == "__main__":
     try:
         main(sys.argv)
     except KeyboardInterrupt:
-      print
-      exit(130)
+      print(); exit(130)

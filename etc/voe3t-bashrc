@@ -12,12 +12,11 @@ source env/bin/activate
 export PS1="${BrightBlue}\A▸${ResetColor} "
 
 # motd / header
-anatta=`cat var/state/anatta | cut -d' ' -f1`
-born=`cat var/state/anatta | cut -d' ' -f2-3`
+read anatta bdate btime <<<$(python -c "import json; a = json.load(open('var/state/anatta.json')); print(a['name'] + ' ' + a['born'])")
 opus=`ls var/opus/*.tar | wc -l`
 estims=`ls var/estim/*.tar | wc -l`
 printf -v h1 'oe3.1:idwgu tmux runner %57s' "oe3:${anatta} [${estims}e·${opus}o]"
-printf -v h2 '%80s' "${born}"
+printf -v h2 '%80s' "${bdate} ${btime}"
 echo -e "${BrightBlue}${h1}"
 echo -e "${Blue}${h2}${ResetColor}"
 

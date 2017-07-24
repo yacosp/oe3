@@ -33,6 +33,8 @@ options:
 
 from __future__ import division
 
+__version__ = '0.1.1'
+
 import gc
 import getopt
 import logging
@@ -112,9 +114,10 @@ def main(argv=None):
 
   # run oe3
   if use_pdb: pdb.set_trace()
+  log.info('=' * 131)
   cg = coag.Coag()
   for i in range(count):
-    log.info("=" * 140)
+    log.info('-' * 131)
     log.info("starting new song...")
     print "\n" + ("-" * 79)
     if fixed_ice == None:
