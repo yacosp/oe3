@@ -15,6 +15,7 @@ from __future__ import division
 
 import bz2
 import colorsys
+import logging
 import math
 import os
 import ossaudiodev
@@ -22,12 +23,19 @@ import pprint
 import random
 import time
 import wave
+
 from commands import getstatusoutput
+from glob     import glob
+from shutil   import copyfileobj
 
 from PIL import Image
 from PIL import ImageOps
 
 from oe3 import oe3_path
+
+
+__version__ = '0.1.3'
+log = logging.getLogger('oe3')
 
 
 # data structure stuff --------------------------------------------------------
@@ -103,6 +111,19 @@ def save_bzdict(path, dct, backup=False):
     raise ValueError("dict contains non-printable data")
   if backup and os.path.isfile(path): os.rename(path, path + '~')
   bz2.BZ2File(path, 'w').write(pprint.pformat(dct))
+
+def compress_logs():
+  """compress old logs"""
+  logs = glob(
+    oe3_path + '/var/log/oe3.log.[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+  )
+  if len(logs):
+    log.info(u"compressing logs...")
+    for logfile in logs:
+      with open(logfile, 'rb') as infile:
+        with bz2.BZ2File(logfile + '.bz2', 'wb') as outfile:
+          copyfileobj(infile, outfile)
+      os.remove(logfile)
 
 def int2le16(val):
   """python 16-bit int -> 16bit little-endian data (str)"""

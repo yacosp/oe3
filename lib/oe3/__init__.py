@@ -8,6 +8,7 @@
 # license, version 3. see LICENSE for full license details.
 #
 
+
 """a composer of non-human music"""
 
 
@@ -30,10 +31,13 @@ __all__ = ['oe3_path']
 # path
 oe3_path = os.path.abspath(os.path.dirname(__file__) + '/../..')
 
-# set up logging
+# logging
 wd = os.getcwd()
 os.chdir(oe3_path)
 logging.config.fileConfig('etc/logging.conf')
 logging.Formatter.converter = time.gmtime
+logging.getLogger('oe3').info('=' * 127)
+from .utils import compress_logs
+compress_logs()
 os.chdir(wd)
-del wd
+del wd, compress_logs
