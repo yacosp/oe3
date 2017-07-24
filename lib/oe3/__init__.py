@@ -16,16 +16,16 @@ from __future__ import division
 import logging
 import logging.config
 import os
+import time
 
 
 __author__    = "santiago pereson <yaco@yaco.net>"
 __copyright__ = "copyright (c) 2003-2017 santiago pereson <yaco@yaco.net>"
 __license__   = "GPL v3"
+__version__   = '3.1'
 
-__version__ = '3.0.1'
+__all__ = ['oe3_path']
 
-
-#------------------------------------------------------------------------------
 
 # path
 oe3_path = os.path.abspath(os.path.dirname(__file__) + '/../..')
@@ -34,5 +34,6 @@ oe3_path = os.path.abspath(os.path.dirname(__file__) + '/../..')
 wd = os.getcwd()
 os.chdir(oe3_path)
 logging.config.fileConfig('etc/logging.conf')
+logging.Formatter.converter = time.gmtime
 os.chdir(wd)
 del wd

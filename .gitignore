@@ -7,6 +7,7 @@ var/opus/*
 !var/opus/README
 var/state/*
 !var/state/README
+!var/state/anatta.json
 tmp/comp/*
 !tmp/comp/README
 dev/
