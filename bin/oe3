@@ -114,10 +114,9 @@ def main(argv=None):
 
   # run oe3
   if use_pdb: pdb.set_trace()
-  log.info('=' * 131)
   cg = coag.Coag()
   for i in range(count):
-    log.info('-' * 131)
+    log.info('-' * 127)
     log.info("starting new song...")
     print "\n" + ("-" * 79)
     if fixed_ice == None:

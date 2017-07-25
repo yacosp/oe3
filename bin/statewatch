@@ -1,0 +1,223 @@
+#!/usr/bin/env python2
+# -*- backup-inhibited: true; encoding: utf-8 -*-
+#
+# oveja electrica - oe3.0.1:bleu
+# copyright (c) 2003-2017 santiago pereson <yaco@yaco.net>
+# http://yaco.net/oe/
+#
+# this file is part of 'oe3', which is released under the gnu general public
+# license, version 3. see LICENSE for full license details.
+#
+# TO-DO:
+#   * show spectrofoto choices
+#   * decide and fix reduxes on transp terms
+#   + replace \x1b[38;5;19m and friends with _setf(), _setb(), _scp(), _sgr0()
+#   - argparse, usage
+#   * mod coag_add_ice, oe3 and spectrofoto.py to update state files
+#
+# DONE:
+#   x check argv, default to var/state/currestim
+#   x one redux > curses-redux
+#   x read .json
+#   x show pretty reduxes
+#   x add last mod date at bottom right
+#   x port time functions to arrow
+#   x add data (id, name) at top right
+#   x generate layout (check viewport size!)
+#
+
+"""statewatch
+internal oe3 state watcher for voe3t
+
+usage: bin/statewatch [<estim_file> <choices_file>]
+"""
+
+
+from __future__ import print_function
+
+__version__ = '0.1.0'
+
+import curses
+import json
+import logging
+import os
+import sys
+import time
+
+import arrow
+
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../lib'))
+from oe3 import utils
+from oe3.comp.spectrofoto import pformat_choices
+
+_log   = logging.getLogger('oe3')
+_cols  = 101
+_lines = 11
+
+def main(argv = sys.argv):
+  """read metadata for the in-use estim and display it graphically"""
+
+  global _cols, _lines
+
+  # init vars
+  paths  = ['var/state/currestim.json'   if len(argv) == 1 else argv[1],
+            'var/state/currchoices.json' if len(argv) == 1 else argv[1]]
+  dicts  = [{}, {}]
+  checks = [arrow.get(0), arrow.get(0)]
+
+  # get terminal size
+  # XXX py3k: replace with os.get_terminal_size!
+  curses.setupterm()
+  _cols  = curses.tigetnum('cols')
+  _lines = curses.tigetnum('lines')
+  _log.debug(u"oe3 state watcher initialized.")
+
+  # main loop
+  try:
+    while True:
+      needupdate = False
+
+      # check files
+      for i in range(2):
+        if not os.path.exists(paths[i]): continue  # shortcircuit
+        if arrow.get(os.path.getmtime(paths[i])) > checks[i]:
+          _log.info(u"file {} modified since {}, updating view...".format(
+            paths[i],
+            checks[i].format('YYYYMMDD.HHmmss'))
+          )
+          checks[i] = arrow.now()
+          with open(paths[i]) as f:
+            dicts[i] = json.load(f)
+          _log.debug(u"   json file loaded from {} ({} items)".format(
+            paths[i], len(dicts[i]))
+          )
+          needupdate = True
+
+      # maybe update
+      if needupdate:
+        _print_state(dicts[0], dicts[1])
+        needupdate = False
+
+      # sleep a decisecond
+      time.sleep(0.1)
+
+  except KeyboardInterrupt:
+    print(); exit(130)
+
+def _print_state(estim, choices):
+  """print estim and comp state"""
+
+  reduxes = estim['reduxes'][:estim['size']] if estim != {} else []
+  os.system('clear')
+  _print_header(estim)
+  _print_reduxes(reduxes[:51])  # XXX to-do: decide how to show bigger estims
+  _print_footer(choices)
+  sys.stdout.flush()
+
+def _print_header(estim):
+  """print estim name, id, ★"""
+
+  _log.debug(u"   printing header...")
+  if estim != {}:
+    modded = u'★' if estim['modified'] else ''
+    status = u"{} · {}{}".format(estim['name'], estim['id'], modded)
+    print(u"{}{:^{}}{}".format(_setf(19), status, _cols, _sgr0()))
+  else:
+    print()
+
+
+def _print_reduxes(reduxes):
+  """show pretty reduxes"""
+
+  _log.debug(u"   printing reduxes...")
+  len_reduxes = len(reduxes)
+  if len_reduxes == 0:
+    print(
+      u"\n\n\n\n{}{:^{}}{}\n\n\n\n".format(_setf(19),
+                                           u"\u2039nostim\u203a›", _cols,
+                                           _sgr0()))
+  elif len_reduxes < 11:
+    print('\n\n')               # three lines
+    _print_redux_line(reduxes)
+    print('\n\n')               # three lines
+  elif len_reduxes < 29:
+    half = -(-len_reduxes // 2)
+    print()
+    _print_redux_line(reduxes[:half])
+    print()
+    _print_redux_line(reduxes[half:])
+    print()
+  else:
+    one_3rd  = -(-len_reduxes // 3)
+    two_3rds = one_3rd * 2
+    _print_redux_line(reduxes[:one_3rd])
+    _print_redux_line(reduxes[one_3rd : two_3rds])
+    _print_redux_line(reduxes[two_3rds:])
+
+
+def _print_footer(choices):
+  """print pretty comp choices"""
+
+  _log.debug(u"   printing footer...")
+  if choices != {}:
+
+    # srt:med.46 rnd:non.41 tfm:mir.78 sbt:017.00 sdr:fix.60 sal:las.38
+    # efl:011.42 tns:lon.61 tbr:  b.52 src:scc.00 flt:non.49
+
+    # srt:non rnd:map tfm:rev sbt:013 sdr:fix sal:\x1b[38;5;21mcen\x1b[38;5;19m
+    # efl:003 tns:lon tbr:\x1b[38;5;21m··s\x1b[38;5;19m src:esc flt:com
+
+    choice_l = pformat_choices(choices, joined=False)
+    termed   = ''
+    for choice in choice_l:
+      tmp, cert = choice.split('.')
+      asp, val  = tmp.split(':')
+      termed += (asp + ':' + (_setf(21) if int(cert) > 50 else ''))
+      termed += val + (_setf(19) if int(cert) > 50 else '') + ' '
+    width   = 87  # 11 choices * (7 chars + space) - 1 space
+  else:
+    termed = u"‹nochoices›"
+    width  = 11
+  print('\n' + ' ' * ((_cols - width) // 2) + _setf(19)
+        + termed + _sgr0(), end='')
+
+
+def _print_redux_line(reduxes, end='\n'):
+  """print one line of formatted reduxes"""
+
+  rcurses     = map(_redux2term, reduxes)
+  rcurses_zip = zip(*rcurses)
+
+  lpad = ' ' * ((_cols - (len(reduxes) * 6 - 1)) // 2)
+  print(lpad, ('\n' + lpad).join([" ".join(l) for l in rcurses_zip]),
+        sep='', end=end)
+
+
+def _redux2term(redux):
+  """generate a three-tuple of 5-char strings for screen printing"""
+
+  rlines = [u"00000"] + [redux[i:i+5] for i in range(0, len(redux), 5)]
+  return ["".join(map(_tup2term, rlines[0], rlines[1])) + _sgr0(),
+          "".join(map(_tup2term, rlines[2], rlines[3])) + _sgr0(),
+          "".join(map(_tup2term, rlines[4], rlines[5])) + _sgr0()]
+
+
+def _tup2term(top, bot):
+  """char tuple to term sequence"""
+
+  return u"{}{}▄".format(
+    u"\x1b[48;5;{}m".format(int(top) + 16),
+    u"\x1b[38;5;{}m".format(int(bot) + 16)
+  )
+
+
+# term color functions
+def _setf(color): return u"\x1b[38;5;{}m".format(color)
+def _setb(color): return u"\x1b[48;5;{}m".format(color)
+def _sgr0():      return u"\x1b[0m"
+
+if __name__ == "__main__":
+  try:
+    main(sys.argv)
+  except KeyboardInterrupt:
+    print(); exit(130)

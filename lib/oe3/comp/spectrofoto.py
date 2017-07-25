@@ -1142,7 +1142,7 @@ class Spectrofoto(object):
                                       choices, row[4][0])
     return tbl
 
-def pformat_choices(choices):
+def pformat_choices(choices, joined=True):
   """format choices for printing"""
 
   ckeys = (('sort', 'srt'), ('randomize', 'rnd'), ('transform', 'tfm'),
@@ -1150,18 +1150,21 @@ def pformat_choices(choices):
            ('sect_align', 'sal'), ('env_follow', 'efl'),
            ('transitions', 'tns'), ('timbres', 'tbr'),
            ('spectrum_source', 'src'), ('filter', 'flt'))
+  timbres = {'s': u'\xb7\xb7s', 'p': u'\xb7p\xb7', 'ps': u'\xb7ps',
+             'b': u'b\xb7\xb7', 'bs': u'b\xb7s', 'bps': u'bps'}
 
   # XXX esto es hoyyible
   choice_l = ('%s:%3s.%02d' % (v,
-                              (isinstance(choices[k][0], int)
-                               and '%03d' % choices[k][0]
-                               or (choices[k][0][:4] == 'inv_'
-                                   and (choices[k][0][:2] +
-                                        choices[k][0][4])
-                                   or choices[k][0][:3])),
-                              choices[k][1])
+                               (isinstance(choices[k][0], int)
+                                and '%03d' % choices[k][0]
+                                or (choices[k][0][:4] == 'inv_'
+                                    and (choices[k][0][:2] +
+                                         choices[k][0][4]))
+                                or (v == 'tbr' and timbres[choices[k][0]])
+                                or choices[k][0][:3]),
+                               choices[k][1])
               for k, v in ckeys)
-  return ' '.join(choice_l)
+  return ' '.join(choice_l) if joined else choice_l
 
 #------------------------------------------------------------------------------
 if __name__ == '__main__':
