@@ -35,7 +35,7 @@ cols = term.COLS - 3
 date_re = re.compile(r'^[0-9]{8}\.[0-9]{6}\.[0-9]{3}')
 level = 'I'
 levelcolor = {'C': term.RED + term.BOLD, 'E': term.RED,
-              'W': term.YELLOW, 'I': term.NORMAL, 'D': term.CYAN}
+              'W': term.MAGENTA, 'I': term.CYAN, 'D': term.BLUE}
 wrapper = TextWrapper(width=(term.COLS - 3), replace_whitespace=False,
                       subsequent_indent='>> ')
 
@@ -47,7 +47,7 @@ def handle_line(line):
     if lline > cols: line = wrapper.fill(line)
     if date_re.match(line):
         level = line[27]
-        print ''.join([term.MAGENTA, line[:20],
+        print ''.join([term.BLUE, line[:20],
                        term.BLUE, term.BOLD, line[20:27], term.NORMAL,
                        levelcolor[level], line[27:48],
                        line[48:], term.NORMAL])

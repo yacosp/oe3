@@ -15,6 +15,7 @@ from __future__ import division
 
 import bz2
 import colorsys
+import json
 import logging
 import math
 import os
@@ -24,10 +25,13 @@ import random
 import time
 import wave
 
+import arrow
+
 from commands import getstatusoutput
 from glob     import glob
 from shutil   import copyfileobj
 
+from jsonesque import process as json_clean
 from PIL import Image
 from PIL import ImageOps
 
@@ -35,7 +39,9 @@ from oe3 import oe3_path
 
 
 __version__ = '0.1.3'
-log = logging.getLogger('oe3')
+
+_log  = logging.getLogger('oe3')
+_conf = json.loads(json_clean(open('etc/oe3.json').read()))
 
 
 # data structure stuff --------------------------------------------------------
@@ -94,23 +100,59 @@ def load_dict(path):
   """load a dict from a text file"""
   return eval(open(path, 'r').read())
 
-def save_dict(path, dct, backup=False):
+def save_dict(path, dict_, backup=False):
   """save a dict to a text file"""
-  if not pprint.isreadable(dct):
+  if not pprint.isreadable(dict_):
     raise ValueError("dict contains non-printable data")
   if backup and os.path.isfile(path): os.rename(path, path + '~')
-  open(path, 'w').write(pprint.pformat(dct))
+  open(path, 'w').write(pprint.pformat(dict_))
 
 def load_bzdict(path):
   """load a dict from a bz2 compressed text file"""
   return eval(bz2.BZ2File(path, 'r').read())
 
-def save_bzdict(path, dct, backup=False):
+def save_bzdict(path, dict_, backup=False):
   """save a dict to a bz2 compressed text file"""
-  if not pprint.isreadable(dct):
+  if not pprint.isreadable(dict_):
     raise ValueError("dict contains non-printable data")
   if backup and os.path.isfile(path): os.rename(path, path + '~')
-  bz2.BZ2File(path, 'w').write(pprint.pformat(dct))
+  bz2.BZ2File(path, 'w').write(pprint.pformat(dict_))
+
+def load_json(path):
+  """load a dict from a json file"""
+  with open(path) as f:
+    dict_ = json.loads(json_clean(f.read()))
+  return dict_
+
+def save_json(path, dict_, backup=False):
+  """save a dict to a json file"""
+  if backup and os.path.isfile(path): os.rename(path, path + '~')
+  with open(path, 'w') as f:
+    json.dump(dict_, f, sort_keys=True, indent=2, separators=(',', ': '))
+
+def lastmod_runfile(module):
+  """find the last modified time for a runfile"""
+  return arrow.get(os.path.getmtime(
+    os.path.join(oe3_path, _conf['runfile_dir'], module + '.json')))
+
+def load_runfile(module):
+  """load state data from runfile"""
+  return load_json(os.path.join(oe3_path,
+                                _conf['runfile_dir'], module + '.json'))
+
+def save_runfile(module, dict_):
+  """save state data to runfile"""
+  path = os.path.join(oe3_path, _conf['runfile_dir'], module + '.json')
+  if dict_ != {}:
+    dict_['module']  = module
+    dict_['updated'] = arrow.utcnow().format('YYYYMMDD.HHmmss.SSS')
+    if os.path.isfile(path) and False:
+      os.rename(
+        path, "{}~{}".format(path, arrow.now().format('YYYYMMDD.HHmmss.SSS'))
+      )
+    save_json(path, dict_)
+  else:
+    os.remove(path)
 
 def compress_logs():
   """compress old logs"""
@@ -118,7 +160,7 @@ def compress_logs():
     oe3_path + '/var/log/oe3.log.[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
   )
   if len(logs):
-    log.info(u"compressing logs...")
+    _log.info(u"compressing logs...")
     for logfile in logs:
       with open(logfile, 'rb') as infile:
         with bz2.BZ2File(logfile + '.bz2', 'wb') as outfile:
@@ -239,7 +281,7 @@ def play_sound(sfile, dur=None):
 def run_doctest(test):
   """run one module's doctest"""
   import doctest, os
-  os.chdir(os.path.join(oe3_path + '/lib'))
+  os.chdir(os.path.join(oe3_path, '/lib'))
   f, c = doctest.testfile(
     os.path.join(oe3_path, 'lib/oe3/test/%s.doctest' %  test),
     module_relative=False)
@@ -255,6 +297,16 @@ def tstamp(secs=None, sep='.'):
   """return a timestamp string, ie: '20051025.053201'"""
   if secs is None: secs = time.time()
   return time.strftime('%Y%m%d' + sep + '%H%M%S', time.gmtime(secs))
+
+def arrowts(time, ms=False):
+  """format an arrow instance as timestamp"""
+  return time.format('YYYYMMDD.HHmmss' + ('.SSS' if ms else ''))
+
+def secs2mmss(secs, showms=False):
+  """format float seconds into an mm:ss[.SSS] string"""
+  mmss = '{:2d}:{:02d}'.format(int(secs // 60), int(secs) % 60)
+  if showms: mmss += '{:.3f}'.format(secs - int(secs))[1:]
+  return mmss
 
 # other stuff -----------------------------------------------------------------
 def shexec(cmd, *args, **kwargs):

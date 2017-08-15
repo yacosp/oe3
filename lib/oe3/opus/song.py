@@ -33,7 +33,7 @@ class Song(object):
     self.id    = utils.tstamp()
     self.estim = estim   # song stimulus
     self.comp  = comp    # (subcomp_class_name, subcomp_version)
-    self.sfile = None    # song .flac file path
+    self.sfile = None    # song .ogg file path
 
   def save(self, flac_path, data_path, meta_path):
     """save song to filesystem

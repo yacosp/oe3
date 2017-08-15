@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # -*- backup-inhibited: true -*-
 #
 # oveja electrica - oe3.0.1:bleu
@@ -9,13 +9,13 @@
 # license, version 3. see LICENSE for full license details.
 #
 
-# voe3
+# voe3t
 # tmux-based e3 runner
 #
 # usage: bin/voe3
 #
 
 tmux -f etc/voe3t-tmux.conf \
-     new-session  -svoe3 -nvoe3 'bin/logtails -n100 -f var/log/oe3.log'\; \
-     split-window -bv -l12      'bin/estimwatch'\; \
-     split-window -bh -l80      'bash --rcfile etc/voe3t-bashrc'
+     new-session  -svoe3t -nvoe3t 'bin/logtails -n100 -f var/log/oe3.log'\; \
+     split-window -bv -l13        'bin/statewatch'\; \
+     split-window -bh -l80        'bash --rcfile etc/voe3t-bashrc'

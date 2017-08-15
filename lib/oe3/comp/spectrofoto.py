@@ -31,7 +31,7 @@ from PIL import ImageFilter
 from PIL import ImageStat
 import numpy
 
-from oe3 import oe3_path, utils, viewer
+from oe3 import oe3_path, utils
 from oe3.crit import MAX_REWARD
 from oe3.opus import song
 from oe3.utils import iround, mean, shexec, stdev
@@ -65,12 +65,8 @@ class Spectrofoto(object):
   def learn(self, song, reward):
     """learn from a reward"""
     log.info("learning reward %s for song '%s'", reward, song.id)
-    self.state['histo'].append((
-      song.id,
-      song.estim.id,
-      song.anal.copy(),
-      song.choices.copy(),
-      reward))
+    self.state['histo'].append((song.id, song.estim.id, song.anal.copy(),
+                                song.choices.copy(), reward))
     self.save_state()
 
   # init song -----------------------------------------------------------------
@@ -86,12 +82,10 @@ class Spectrofoto(object):
     self.song.images = [i.resize((192, 192), Image.ANTIALIAS)
                         for i in self.song.estim.images]
     self.song.img_medians = {}
+    self._save_runfile(5)
     self.song.tmpd = os.path.join(oe3_path, 'tmp/comp', self.song.id + '.tmp')
     os.mkdir(self.song.tmpd)
     os.chdir(self.song.tmpd)
-    log.debug("   generating estim gallery")
-    gal = self.viewer.gallery(self.song.estim.images, self.conf['show_images'])
-    #gal.show(command=(self.conf['viewer_estim_cmd'] % estim.name))
 
 
   # analyze estim -------------------------------------------------------------
@@ -212,7 +206,8 @@ class Spectrofoto(object):
       log.debug("   option: '%s', choice: %s;\n votes: %s\n certs: %s",
                 option, choices[option], votes, certs)
     self.song.choices = choices
-    log.info("anal ch.: %s", pformat_choices(self.song.choices))
+    log.info("anal: %s", pformat_choices(self.song.choices))
+    self._save_runfile(10)
 
   def _anal_choose(self, option, values, aspect, anal_value):
     """
@@ -253,7 +248,8 @@ class Spectrofoto(object):
     if foption is None: return
     chist = self._choice_history(foption, fzlist)
     self._intra_modify_choices(foption, chist)
-    log.info("intra ch.: %s", pformat_choices(self.song.choices))
+    log.info("intra: %s", pformat_choices(self.song.choices))
+    self._save_runfile(13)
 
   def _intra_find_focus(self):
     """find choice with highest cert"""
@@ -325,7 +321,8 @@ class Spectrofoto(object):
           self.song.choices[option] = (rchoice, 0)
           log.debug("   %s: %s (%s) -> %s: %s",
                     option, choice[0], choice[1], option, rchoice)
-    log.info("exm ch.: %s", pformat_choices(self.song.choices))
+    log.info("exm: %s", pformat_choices(self.song.choices))
+    self._save_runfile(17)
 
   # fixed_choices -------------------------------------------------------------
   def _fixed_choices(self, choices):
@@ -335,7 +332,7 @@ class Spectrofoto(object):
       for k, v in choices.iteritems():
         if v.isdigit(): v = int(v)
         self.song.choices[k] = (v, 0)
-      log.info("fixed ch.: %s", pformat_choices(self.song.choices))
+      log.info("fixed: %s", pformat_choices(self.song.choices))
 
   def _fix_song_dur(self):
     """modify sect_base_time so song duration is within bounds"""
@@ -352,18 +349,21 @@ class Spectrofoto(object):
     try:
       while self.song.choices['sect_base_time'][0] * len_estim < min_sd:
         idx = sbt_vals.index(self.song.choices['sect_base_time'][0])
-        log.warning("   forced min song duration, fixing sbt. %s -> %s", sbt_vals[idx], sbt_vals[idx + 1])
+        log.warning("   forced min song duration, fixing sbt. %s -> %s",
+                    sbt_vals[idx], sbt_vals[idx + 1])
         self.song.choices['sect_base_time'] = (sbt_vals[idx + 1], 0)
     except IndexError:
       log.warning("   cannot reduce sbt any more!")
     try:
       while self.song.choices['sect_base_time'][0] * len_estim > max_sd:
         idx = sbt_vals.index(self.song.choices['sect_base_time'][0])
-        log.warning("   forced max song duration, fixing sbt. %s -> %s", sbt_vals[idx], sbt_vals[idx - 1])
+        log.warning("   forced max song duration, fixing sbt. %s -> %s",
+                    sbt_vals[idx], sbt_vals[idx - 1])
         self.song.choices['sect_base_time'] = (sbt_vals[idx - 1], 0)
     except IndexError:
       log.warning("   cannot increment sbt any more!")
-    # other fixed choices
+    # XXX other fixed choices?
+    self._save_runfile(20)
 
 
   # create song ---------------------------------------------------------------
@@ -373,6 +373,7 @@ class Spectrofoto(object):
     choices = dict((k, v[0]) for k, v in self.song.choices.iteritems())
     self._resort_images(choices)
     trackl = self._prep_tracks(choices)
+    self._save_runfile(42)
     self._gen_sources(trackl)
     mixl = self._filter_sections(trackl)
     self._mix_tracks(mixl)
@@ -385,16 +386,16 @@ class Spectrofoto(object):
     getattr(self, '_resort_%s' % choices['sort'])()
     log.debug("   sorted:      %s",
               [img.info['id'][-3:] for img in self.song.images])
+    self._save_runfile(22)
     getattr(self, '_resort_%s' % choices['randomize'])()
     log.debug("   randomized:  %s",
               [img.info['id'][-3:] for img in self.song.images])
+    self._save_runfile(24)
     getattr(self, '_resort_%s' % choices['transform'])()
     log.debug("   transformed: %s",
               [img.info['id'][-3:] for img in self.song.images])
     self.song.img_idx = [img.info['id'] for img in self.song.images]
-    log.debug("   generating resorted estim gallery")
-    gal = self.viewer.gallery(self.song.images, self.conf['show_images'])
-    #gal.show(command=self.conf['viewer_procestim_cmd'])
+    self._save_runfile(26)
 
   def _resort_none(self): pass
 
@@ -578,7 +579,7 @@ class Spectrofoto(object):
     for img in images:
       log.debug("   splitting '%s' hsl channels", img.info['id'])
       hsl['h'], hsl['s'], hsl['l'] = utils.image_hsl_split(img)
-      if self.conf['hsl_grayscale_kluge']:
+      if self.conf['hsl_gray_kluge']:
         if max(hsl['h'].getdata()) < 11:
           hsl['h'] = hsl['l']
           log.debug("   hsl grayscale kluge: channel 'H' copied from 'L'!")
@@ -721,6 +722,7 @@ class Spectrofoto(object):
     """generate source soundfiles"""
     log.info("generating sound sources")
     log.info("choices: %s", pformat_choices(self.song.choices))
+    prog = 42
     for tid, tdata in trackl.iteritems():
       if tdata is not None:
         if tdata['img'] is not None:  # shared source image
@@ -732,6 +734,8 @@ class Spectrofoto(object):
             sect['snd'] = self._gen_one_source(tid, sect['img'],
                                                sect['dur'],
                                                '%02d' % i)
+      prog += 6
+      self._save_runfile(prog)
 
   def _gen_one_source(self, tid, img_ref, dur, idpost):
     """generate one sound source"""
@@ -835,6 +839,7 @@ class Spectrofoto(object):
     log.info("generating %d tracks", len(trackl))
     log.info("choices: %s", pformat_choices(self.song.choices))
     mixl = []
+    prog = 60
     for tid, tdata in trackl.iteritems():
       log.debug("   generating track '%s' sections", tid)
       log.info("choices: %s", pformat_choices(self.song.choices))
@@ -845,6 +850,8 @@ class Spectrofoto(object):
                           tdata['sections']):
         if sdata['bands']:
           partl.append(self._filter_section(tid, sdata, i))
+        prog += 10 / len(tdata['sections'])
+        self._save_runfile(int(prog))
       mixl.append([tdata['start'], partl])
     self.song.mixlist = mixl
     log.debug("   saving mixlist ...")
@@ -867,7 +874,7 @@ class Spectrofoto(object):
       sdata['snd'] = ewf_fname
 
   def _filter_section(self, tid, sdata, i):
-    """apply bpfs to source parts using csound"""
+    """apply bpfs to source parts using ecasound"""
     log.debug("   applying filters to section %02d @ %s",
               i, [b['center'] for b in sdata['bands']])
     src_fname = sdata['snd']
@@ -981,24 +988,7 @@ class Spectrofoto(object):
 
   # wrap song -----------------------------------------------------------------
   def _wrap_song(self):
-    """
-    move files, copy estim, save meta, remove temp dir
-
-    dir struct:
-      <song_id>.pyd.bz2
-      <song_id>.wav
-      <song_id>.tar
-        |- <song_id>.orc
-        |- <song_id>.sco
-        |- anal.pyd.bz2
-        |- choices.pyd.bz2
-        |- tracklist.pyd.bz2
-        |- mixlist.pyd.bz2
-        |- <estim_id>.pyd.bz2
-        `- <estim_id>/
-             |- <img_id>.<ext>
-             `- ...
-    """
+    """move files, copy estim, save meta, remove temp dir"""
     # XXX clean up...
     log.info("wrapping song")
     sid  = self.song.id
@@ -1044,6 +1034,8 @@ class Spectrofoto(object):
     shutil.rmtree(sid)
     os.chdir(oe3_path)
     shutil.rmtree(self.song.tmpd)
+    self._save_runfile(100)
+    self._save_runfile(100, clear=True)
 
 
   # history stuff -------------------------------------------------------------
@@ -1075,7 +1067,6 @@ class Spectrofoto(object):
     log.info("initializing new spectrofoto subcomposer, id: %s", id(self))
     log.debug("   loading conf from %s", conf_path)
     self.conf = utils.load_dict(conf_path)
-    self.viewer = viewer.Viewer()
     state_path = os.path.join(oe3_path, self.conf['state_path'])
     if os.path.isfile(state_path):
       log.debug("   loading state from %s", state_path)
@@ -1102,6 +1093,26 @@ class Spectrofoto(object):
     """load state from filesystem"""
     if path is None: path = os.path.join(oe3_path, self.conf['state_path'])
     self.state = utils.load_bzdict(path)
+
+  def _save_runfile(self, prog, clear=False):
+    """save comp state to runfile"""
+    if clear:
+      utils.save_runfile('comp', {});
+      log.debug("   clearing comp runfile...")
+      return  # shortcircuit
+    #log.debug("   updating comp runfile...")
+    dict_ = {k: v for k, v in self.song.__dict__.items() if k in
+                ('anal', 'choices', 'comp', 'dur', 'id', 'img_anomaly',
+                 'img_distances', 'img_idx', 'img_medians', 'seed')}
+    dict_['estim_id']   = self.song.estim.id
+    dict_['estim_name'] = self.song.estim.name
+    dict_['images']     = [img.info['id'] for img in self.song.images]
+    dict_['reduxes']    = {i.info['id']:i.info['redux']
+                         for i in self.song.images}
+    dict_['progress']   = prog
+    utils.save_runfile('comp', dict_)
+    if self.conf['sleep_on_update'] != 0:
+      time.sleep(self.conf['sleep_on_update'])
 
   def _play_demo_sound(self, fname):
     """play a demo of one sound"""
@@ -1151,7 +1162,7 @@ def pformat_choices(choices, joined=True):
            ('transitions', 'tns'), ('timbres', 'tbr'),
            ('spectrum_source', 'src'), ('filter', 'flt'))
   timbres = {'s': u'\xb7\xb7s', 'p': u'\xb7p\xb7', 'ps': u'\xb7ps',
-             'b': u'b\xb7\xb7', 'bs': u'b\xb7s', 'bps': u'bps'}
+             'b': u'b\xb7\xb7', 'bs': u'b\xb7s', 'bp': u'bp\xb7', 'bps': 'bps'}
 
   # XXX esto es hoyyible
   choice_l = ('%s:%3s.%02d' % (v,

@@ -1,0 +1,11 @@
+// oe3 etc/voe3t.json
+{
+  // estimwatch
+
+  // watched_modules: vagab, coag, gatil, comp, opus, interp, crit
+  "watched_modules": ["comp", "interp"],
+
+  // visuals
+  "text_colors":  [17, 19, 21],              // dim, normal, bright
+  "redux_colors": [16, 17, 18, 19, 20, 21],  // 0: black, 5: brightest
+}

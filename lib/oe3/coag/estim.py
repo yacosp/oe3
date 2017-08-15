@@ -21,7 +21,7 @@ import tempfile
 
 from PIL import Image
 
-from oe3 import utils, viewer
+from oe3 import utils
 
 
 log = logging.getLogger('coag')
@@ -83,7 +83,7 @@ class ImageCollEstim(Estim):
     """set defaults, load data"""
     Estim.__init__(self)
     self.type      = 'imagecoll'
-    self.images    = [] # image (pil object) list
+    self.images    = []                   # image (pil object) list
     self.data_path = '%s.tar' % self.id
     self._index    = {}
     if meta_path is not None: self.load(meta_path)
@@ -171,10 +171,6 @@ class ImageCollEstim(Estim):
   def get_image(self, id):
     """image by id"""
     return self._index[id]
-
-  def show(self, show_images=False, cmd=None):
-    """show a gallery"""
-    viewer.Viewer().gallery(self.images, show_images).show(command=cmd)
 
   def _full_data_path(self, meta_path):
     """build a full path for the data file"""
