@@ -45,7 +45,7 @@ def handle_line(line):
     lline = len(line)
     if lline == 0: return  # shortcircuit
     if lline > cols: line = wrapper.fill(line)
-    if date_re.match(line):
+    if date_re.match(line) and levelcolor.has_key(line[27]):
         level = line[27]
         print ''.join([term.BLUE, line[:20],
                        term.BLUE, term.BOLD, line[20:27], term.NORMAL,
@@ -106,10 +106,13 @@ def do_tail(filename, lines, follow, func = handle_line):
 def main(argv = sys.argv):
     parser = OptionParser()
     parser.add_option("-n", "--number", action="store", type="int",
-                      dest="number", default=10)
+                      dest="number", default=100)
     parser.add_option("-f", "--follow", action="store_true",
-                      dest="follow", default=0)
+                      dest="follow", default=1)
     (options, args) = parser.parse_args()
+    if len(args) == 0:
+        print u"tailin default log at var/log/oe3.log..."
+        args += ['var/log/oe3.log']
     if len(args) != 1:
         print __doc__
         return 0
