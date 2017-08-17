@@ -35,13 +35,14 @@ from jsonesque import process as json_clean
 from PIL import Image
 from PIL import ImageOps
 
-from oe3 import oe3_path
-
 
 __version__ = '0.1.3'
 
 _log  = logging.getLogger('oe3')
 _conf = json.loads(json_clean(open('etc/oe3.json').read()))
+
+# oe3/__init__.py uses some util functions, so it can't be imported
+oe3_path = os.path.abspath(os.path.dirname(__file__) + '/../..')
 
 
 # data structure stuff --------------------------------------------------------
@@ -302,10 +303,10 @@ def arrowts(time, ms=False):
   """format an arrow instance as timestamp"""
   return time.format('YYYYMMDD.HHmmss' + ('.SSS' if ms else ''))
 
-def secs2mmss(secs, showms=False):
+def secs2mmss(secs, show_ms=True):
   """format float seconds into an mm:ss[.SSS] string"""
   mmss = '{:2d}:{:02d}'.format(int(secs // 60), int(secs) % 60)
-  if showms: mmss += '{:.3f}'.format(secs - int(secs))[1:]
+  if show_ms: mmss += '{:.3f}'.format(secs)[-4:]
   return mmss
 
 # other stuff -----------------------------------------------------------------

@@ -33,8 +33,6 @@ class Coag(object):
 
   def __init__(self):
     """load conf, load main index, generate other indexes"""
-    log.info("initializing estim db server, id: %s", id(self))
-    log.debug("   loading conf from %s", conf_path)
     self.conf  = utils.load_dict(conf_path)
     try:
       self.index = utils.load_bzdict(

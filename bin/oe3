@@ -19,6 +19,7 @@ options:
   -d, --pdb                 run through pdb
   -e, --estim=ESTIM_PATH    use ESTIM_PATH instead of a gatil-chosen one
   -i, --show-images         show images instead of reduxes
+  -l, --list                list songs with rewards
   -m, --min-song-dur=S      min song dur (seconds)
   -M, --max-song-dur=S      max song dur (seconds)
   -n, --count               number of times to run
@@ -29,7 +30,7 @@ options:
 
 from __future__ import division
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 import gc
 import getopt
@@ -38,14 +39,17 @@ import os
 import pdb
 import sys
 import time
+
+from glob   import glob
 from pprint import pformat
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/../lib"))
+from oe3 import anatta, utils
 from oe3.coag import core as coag
 from oe3.coag import estim
 from oe3.comp import spectrofoto
+from oe3.comp.spectrofoto import tbr_pretty
 from oe3.crit import REWARDS
-from oe3.utils import shexec, secs2mmss, save_runfile
 
 sf  = None
 sv  = None
@@ -58,25 +62,26 @@ def main(argv=None):
   # parse command line options
   try:
     opts, args = getopt.getopt(argv[1:],
-                               "c:de:im:M:n:Rh",
+                               "c:de:ilm:M:n:Rh",
                                ["choices=", "pdb", "estim=",
-                                "show-images", "min-song-dur=",
-                                "max-song-dur=", "count=", "no-reward",
-                                "help"])
+                                "show-images", "list", "min-song-dur=",
+                                "max-song-dur=", "count=",
+                                "no-reward", "help"])
   except getopt.error, msg:
     print msg
     print __doc__
     return 2
 
   # set defaults
-  choices =     None
-  use_pdb =     False
-  fixed_ice =   None
+  choices     = None
+  use_pdb     = False
+  fixed_ice   = None
   show_images = False
-  min_sd =      None
-  max_sd =      None
-  count =       1
-  no_reward =   False
+  list_songs  = False
+  min_sd      = None
+  max_sd      = None
+  count       = 1
+  no_reward   = False
 
   # process options
   for o, a in opts:
@@ -88,6 +93,8 @@ def main(argv=None):
       fixed_ice = estim.ImageCollEstim(a)
     elif o in ("-i", "--show-images"):
       show_images = True
+    elif o in ("-l", "--list"):
+      list_songs = True
     elif o in ("-m", "--min-song-dur"):
       min_sd = int(a)
     elif o in ("-M", "--max-song-dur"):
@@ -100,13 +107,17 @@ def main(argv=None):
       print __doc__
       return 0
 
+  # list
+  if list_songs:
+    _list_songs()
+    return 0
+
   # run oe3
   if use_pdb: pdb.set_trace()
   cg = coag.Coag()
   for i in range(count):
     log.info('-' * 127)
     log.info("starting new song...")
-    #print "\n" + ("-" * 79)
     if fixed_ice == None:
       log.info("choosing estim...")
       ice = cg.rand_estim('type', 'imagecoll')
@@ -126,7 +137,6 @@ def _run_spectrofoto(ice=None, choices=None, show_images=False, min_sd=None,
                    max_sd=None, no_reward=False):
   """create one song"""
 
-
   global sf
   gc.collect()
   log.info("running comp...")
@@ -140,6 +150,36 @@ def _run_spectrofoto(ice=None, choices=None, show_images=False, min_sd=None,
   if not no_reward:
     sf.learn(sg, _get_reward())
   print
+
+#------------------------------------------------------------------------------
+def _list_songs():
+  """list all songs and rewards"""
+
+  # header
+  headers = [('song', 15), ('estim', 35), ('opus', 4),
+             ('tbr', 3),   ('dur', 9),    ('rew', 3)]
+  print("oe3:{} opus list:\n".format(anatta['name']))
+  print('  '.join([("{:{}}" if t != 'dur' else "{:^{}}").format(t, w)
+                   for (t, w) in headers]))
+  print('  '.join(map(lambda x: '-' * x, [w for (t, w) in headers])))
+
+  # song list
+  rews  = 0
+  opus  = 0
+  for path in sorted(glob('var/opus/*.pyd.bz2')):
+    meta    = utils.load_bzdict(path)
+    opus   += 1
+    reward  = '{:+3d}'.format(meta['reward'][0]) if 'reward' in meta else ' --'
+    print(u"{}  {}-{:19.19}  {:4d}  {}  {:>9}  {}".format(
+      meta['id'],
+      meta['estim_id'],
+      meta['estim_name'],
+      opus,
+      tbr_pretty[meta['choices']['timbres'][0]],
+      utils.secs2mmss(meta['dur']),
+      reward
+    ))
+  print('')
 
 #------------------------------------------------------------------------------
 def _play_song(song):
@@ -160,12 +200,12 @@ def _play_song(song):
     'duration':   mdur,
     'progress':   5,
   }
-  save_runfile('interp', dict_)
-  print "duration: %s" % (secs2mmss(mdur))
+  utils.save_runfile('interp', dict_)
+  print "duration: %s" % (utils.secs2mmss(mdur))
   print "playing:  %s" % song.sfile
-  shexec("ogg123 %s", song.sfile)
+  utils.shexec("ogg123 %s", song.sfile)
   time.sleep(.5)
-  save_runfile('interp', {})
+  utils.save_runfile('interp', {})
 
 #------------------------------------------------------------------------------
 def _get_reward():

@@ -6,6 +6,6 @@
   "watched_modules": ["comp", "interp"],
 
   // visuals
-  "text_colors":  [17, 19, 21],              // dim, normal, bright
-  "redux_colors": [16, 17, 18, 19, 20, 21],  // 0: black, 5: brightest
+  "text_colors":  [17, 19, 21],             // dim, normal, bright
+  "redux_colors": [0, 17, 18, 19, 20, 21],  // 0: black, 5: brightest
 }

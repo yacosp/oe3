@@ -8,27 +8,6 @@
 # this file is part of 'oe3', which is released under the gnu general public
 # license, version 3. see LICENSE for full license details.
 #
-# TO-DO:
-#   + use wcwidth to calculate paddings
-#   + extend monitorin to all modules
-#   + add oe3:afol graph with blinkenlichts
-#   - decide and fix reduxes on transp terms
-#   - argparse, usage
-#
-# DONE:
-#   x check argv, default to var/state/currestim
-#   x one redux > curses-redux
-#   x read .json
-#   x show pretty reduxes
-#   x add last mod date at bottom right
-#   x port time functions to arrow
-#   x add data (id, name) at top right
-#   x generate layout (check viewport size!)
-#   x show spectrofoto choices
-#   x replace \x1b[38;5;19m and friends with _setf(), _setb(), _scp(), _sgr0()
-#   x mod coag_add_ice, oe3 and spectrofoto.py to update state files
-#   x rewrite to use comp and interp run/ state files
-#
 
 """statewatch
 internal oe3 state watcher for voe3t
@@ -47,6 +26,7 @@ import logging
 import os
 import sys
 import time
+
 from os.path import exists, getmtime
 
 import arrow
@@ -95,8 +75,6 @@ def main(argv = sys.argv):
           dirty = False
       elif arrow.get(getmtime(path)) > checks[running]:
         dict_ = utils.load_json(path)
-        #_log.debug("   runfile {} for '{}' updated: {}% done".format(
-        #  path, module, dict_['progress']))
         checks[module] = arrow.now()
         os.system('clear')
         eval("_print_{module}(dict_)".format(module=module))
@@ -112,7 +90,7 @@ def _print_clear():
   """clear the viewer"""
 
   print("\n\n\n\n\n\n{}{:^{}}{}\n\n\n\n".format(
-    _setf(19),
+    _setf(_conf['text_colors'][1]),
     "⎡oe3 not running⎦", _cols,
     _sgr0()
   ))
@@ -135,6 +113,7 @@ def _print_interp(dict_):
   reduxes = [dict_['reduxes'][img] for img in dict_['images']]
   dur     = int(dict_['duration'])
   for i in xrange(dur + 1):
+    os.system('clear')
     _print_interp_header(dict_)
     _print_reduxes(reduxes[:51])  # XXX to-do: decide how to show bigger colls
     _print_comp_footer(dict_)
@@ -152,7 +131,8 @@ def _print_comp_header(dict_):
     estim_name = dict_['estim_name'],
     estim_id   = dict_['estim_id']
   )
-  print("{}{:^{}}{}".format(_setf(19), header, _cols, _sgr0()))
+  print("{}{:^{}}{}".format(
+    _setf(_conf['text_colors'][1]), header, _cols, _sgr0()))
 
 
 def _print_comp_footer(dict_):
@@ -164,15 +144,23 @@ def _print_comp_footer(dict_):
     for choice in choice_l:
       tmp, cert = choice.split('.')
       asp, val  = tmp.split(':')
-      termed += (asp + ':' + (_setf(21) if int(cert) > 50 else ''))
-      termed += val + (_setf(19) if int(cert) > 50 else '') + ' '
-    width   = 87  # 11 choices * (7 chars + space) - 1 space
+      if int(cert) > 50:
+        termed += "{}:{}{}{} ".format(
+          asp, _setf(_conf['text_colors'][2]),
+          val, _setf(_conf['text_colors'][1])
+        )
+      else:
+        termed += asp + ':' + val + ' '
+    # width: 87 [11 choices * (7 chars + space) - 1 space]
+    pad = ' ' * ((_cols - 87) // 2)
 
   else:
     termed = "‹nochoices›"
-    width  = 11
+    # width: 11
+    pad = ' ' * ((_cols - 11) // 2)
 
-  print('\n' + ' ' * ((_cols - width) // 2) + _setf(19) + termed + _sgr0())
+  print("{}{}{}{}".format(
+    pad, _setf(_conf['text_colors'][1]), termed, _sgr0()))
 
 
 def _print_interp_header(dict_):
@@ -184,7 +172,8 @@ def _print_interp_header(dict_):
     estim    = dict_['estim_name'],
     duration = utils.secs2mmss(dict_['duration']).strip()
   )
-  print("{}{:^{}}{}".format(_setf(19), header, _cols, _sgr0()))
+  print("{}{:^{}}{}".format(
+    _setf(_conf['text_colors'][1]), header, _cols, _sgr0()))
 
 
 def _print_progress(prog):
@@ -192,14 +181,19 @@ def _print_progress(prog):
 
   # '  [<bar><pad>]  '
   width  = _cols - 6
-  filled = int(prog * width / 100)
+  filled = max(int(prog * width / 100), 3)
   pad    = ' ' * (width - filled) + _setf(21)
   if filled > width - 1:
     bar = '─' * filled + pad
   else:
-    bar = '{}{}─{}─{}─{}'.format(
-      '─' * (filled - 3), _setf(19), _setf(18), _setf(17), pad)
-  print("  {}⎡{}⎦{} ".format(_setf(21), bar, _sgr0()), end='')
+    bar = '{}{}─{}─{}'.format(
+      '─' * (filled - 2),
+      _setf(_conf['redux_colors'][3]),
+      _setf(_conf['redux_colors'][1]),
+      pad
+    )
+  print("  {}⎡{}⎦{} ".format(
+    _setf(_conf['redux_colors'][5]), bar, _sgr0()), end='')
 
 
 def _print_reduxes(reduxes):
@@ -225,32 +219,32 @@ def _print_reduxes(reduxes):
     _print_redux_line(reduxes[two_3rds:])
 
 
-def _print_redux_line(reduxes, end='\n'):
+def _print_redux_line(reduxes):
   """print one line of formatted reduxes"""
 
   rcurses     = map(_redux2term, reduxes)
   rcurses_zip = zip(*rcurses)
 
-  lpad = ' ' * ((_cols - (len(reduxes) * 6 - 1)) // 2)
-  print(lpad, ('\n' + lpad).join([" ".join(l) for l in rcurses_zip]),
-        sep='', end=end)
+  pad = ' ' * ((_cols - (len(reduxes) * 6 - 1)) // 2)
+  print(pad, ('\n' + pad).join([" ".join(l) for l in rcurses_zip]), sep='')
 
 
 def _redux2term(redux):
   """generate a three-tuple of 5-char strings for screen printing"""
 
   rlines = ["00000"] + [redux[i:i+5] for i in range(0, len(redux), 5)]
-  return ["".join(map(_tup2term, rlines[0], rlines[1])) + _sgr0(),
-          "".join(map(_tup2term, rlines[2], rlines[3])) + _sgr0(),
-          "".join(map(_tup2term, rlines[4], rlines[5])) + _sgr0()]
+  termed = [''.join(map(_tup2term, rlines[0], rlines[1])) + _sgr0(),
+            ''.join(map(_tup2term, rlines[2], rlines[3])) + _sgr0(),
+            ''.join(map(_tup2term, rlines[4], rlines[5])) + _sgr0()]
+  return termed
 
 
 def _tup2term(top, bot):
   """char tuple to term sequence"""
 
   return "{}{}▄".format(
-    "\x1b[48;5;{}m".format(int(top) + 16),
-    "\x1b[38;5;{}m".format(int(bot) + 16)
+    _setb(_conf['redux_colors'][int(top)]),
+    _setf(_conf['redux_colors'][int(bot)])
   )
 
 

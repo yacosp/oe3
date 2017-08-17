@@ -1,4 +1,4 @@
-# oe3 lib/oe3/comp/spectrofoto.py
+# oe3 lib/oe3/comp/spectrofoto.py  -*- encoding: utf-8 -*-
 #
 # oveja electrica - oe3.0.1:bleu
 # copyright (c) 2003-2017 santiago pereson <yaco@yaco.net>
@@ -42,6 +42,9 @@ __version__ = '0.1.2'
 conf_path = os.path.join(oe3_path, 'etc/spectrofoto.conf')
 log = logging.getLogger('comp')
 
+tbr_pretty = {'s': u'··s', 'p': u'·p·', 'ps': u'·ps',
+              'b': u'b··', 'bs': u'b·s', 'bp': u'bp·', 'bps': 'bps'}
+
 
 #------------------------------------------------------------------------------
 class Spectrofoto(object):
@@ -68,6 +71,10 @@ class Spectrofoto(object):
     self.state['histo'].append((song.id, song.estim.id, song.anal.copy(),
                                 song.choices.copy(), reward))
     self.save_state()
+    spath = os.path.join(oe3_path, 'var/opus', song.id + '.pyd.bz2')
+    smeta = utils.load_bzdict(spath)
+    smeta['reward'] = reward
+    utils.save_bzdict(spath, smeta)
 
   # init song -----------------------------------------------------------------
   def _init_song(self, estim, seed=None):
@@ -94,6 +101,7 @@ class Spectrofoto(object):
     get (min, max, range, mean, stdev) of
     (r, g, b, l, l_top, l_mid, l_bottom, distance)
     """
+    # XXX check the statistics standard lib module
     log.info("analyzing estim")
     aspects = ('red', 'grn', 'blu', 'gry', 'top', 'mid', 'btm')
     self.song.anal = {'num_images': len(self.song.images)}
@@ -989,15 +997,18 @@ class Spectrofoto(object):
   # wrap song -----------------------------------------------------------------
   def _wrap_song(self):
     """move files, copy estim, save meta, remove temp dir"""
+
     # XXX clean up...
     log.info("wrapping song")
     sid  = self.song.id
     base = os.path.join(oe3_path, 'var/opus', sid)
     wpath, mpath = base + '.wav', base + '.pyd.bz2'
+
     # move wav
     log.debug("   moving wav to %s", wpath)
     os.rename(self.song.sfile, wpath)
     self.song.sfile = wpath
+
     # move tmp files
     log.debug("   creating tar archive: %s.tar", base)
     os.mkdir(base)
@@ -1006,19 +1017,25 @@ class Spectrofoto(object):
       os.rename(f, os.path.join(base, f))
     os.chdir(os.path.join(oe3_path, 'var/opus'))
     tarfile.open(sid + '.tar', 'w').add(sid)
+
     # copy estim
     epath = os.path.join(base, self.song.estim.id + '.pyd.bz2')
     log.debug("   copying estim to %s", epath)
     self.song.estim.save(epath)
+
     # save metadata
+    # XXX should save opus number in song and comp state
     log.debug("   saving metadata to %s", mpath)
     wparams = wave.open(wpath, 'r').getparams()
     self.song.dur = wparams[3] / wparams[2]
     meta = dict((k, v) for k, v in self.song.__dict__.iteritems() if k in
                 ('anal', 'choices', 'comp', 'dur', 'id', 'img_anomaly',
                  'img_distances', 'img_idx', 'img_medians', 'seed'))
+    meta['estim_id']   = self.song.estim.id
+    meta['estim_name'] = self.song.estim.name
     meta['sfile'] = sid + '.ogg'
     utils.save_bzdict(mpath, meta)
+
     # encode wav
     log.debug("   oggencoding ...")
     date = "%s-%s-%s %s:%s:%s" % (sid[:4], sid[4:6], sid[6:8],
@@ -1029,6 +1046,7 @@ class Spectrofoto(object):
            date=date, sid=sid, wav=wpath)
     os.unlink(wpath)
     self.song.sfile= base + '.ogg'
+
     # clean up
     log.debug("   cleaning up ...")
     shutil.rmtree(sid)
@@ -1161,8 +1179,6 @@ def pformat_choices(choices, joined=True):
            ('sect_align', 'sal'), ('env_follow', 'efl'),
            ('transitions', 'tns'), ('timbres', 'tbr'),
            ('spectrum_source', 'src'), ('filter', 'flt'))
-  timbres = {'s': u'\xb7\xb7s', 'p': u'\xb7p\xb7', 'ps': u'\xb7ps',
-             'b': u'b\xb7\xb7', 'bs': u'b\xb7s', 'bp': u'bp\xb7', 'bps': 'bps'}
 
   # XXX esto es hoyyible
   choice_l = ('%s:%3s.%02d' % (v,
@@ -1171,7 +1187,7 @@ def pformat_choices(choices, joined=True):
                                 or (choices[k][0][:4] == 'inv_'
                                     and (choices[k][0][:2] +
                                          choices[k][0][4]))
-                                or (v == 'tbr' and timbres[choices[k][0]])
+                                or (v == 'tbr' and tbr_pretty[choices[k][0]])
                                 or choices[k][0][:3]),
                                choices[k][1])
               for k, v in ckeys)
