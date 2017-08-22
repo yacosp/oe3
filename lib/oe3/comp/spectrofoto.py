@@ -360,15 +360,15 @@ class Spectrofoto(object):
     try:
       while self.song.choices['sect_base_time'][0] * len_estim < min_sd:
         idx = sbt_vals.index(self.song.choices['sect_base_time'][0])
-        log.warning("   forced min song duration, fixing sbt. %s -> %s",
-                    sbt_vals[idx], sbt_vals[idx + 1])
+        log.info("   forced min song duration, fixing sbt. %s -> %s",
+                 sbt_vals[idx], sbt_vals[idx + 1])
         self.song.choices['sect_base_time'] = (sbt_vals[idx + 1], 0)
     except IndexError:
       log.warning("   cannot reduce sbt any more!")
     try:
       while self.song.choices['sect_base_time'][0] * len_estim > max_sd:
         idx = sbt_vals.index(self.song.choices['sect_base_time'][0])
-        log.warning("   forced max song duration, fixing sbt. %s -> %s",
+        log.info("   forced max song duration, fixing sbt. %s -> %s",
                     sbt_vals[idx], sbt_vals[idx - 1])
         self.song.choices['sect_base_time'] = (sbt_vals[idx - 1], 0)
     except IndexError:
@@ -834,7 +834,7 @@ class Spectrofoto(object):
     img = self.song.estim.get_image(img_id)
     while img.size[0] > 1024 or img.size[1] > 1024:
       img = img.resize((img.size[0] // 2, img.size[1] // 2), Image.ANTIALIAS)
-      log.warning("   image too big, resized to %s", img.size)
+      log.info("   image too big, resized to %s", img.size)
     if channel != 'hsl':
       log.debug("   splitting hsl bands from %s (%dx%d)",
                 img_id, img.size[0], img.size[1])

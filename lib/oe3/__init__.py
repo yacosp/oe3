@@ -39,7 +39,7 @@ if not os.path.exists(os.path.join(oe3_path, 'var/lib/oe3.json')):
   # init anatta
   # XXX this should be @ anatta.py
   anatta = {'name':      'unknown',
-            'born_date': arrow.now().format('YYYY-MM-DD HH:mm:ss ZZ'),
+            'born_date': arrow.get().format('YYYY-MM-DD HH:mm:ss ZZ'),
             'born_sys':  shexec('uname -a')
   }
   save_json('var/lib/oe3.json', {'anatta': anatta})

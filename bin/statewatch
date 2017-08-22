@@ -39,7 +39,7 @@ _log  = logging.getLogger('voe3t')
 _conf = {}
 
 
-def main(argv = sys.argv):
+def main(argv=sys.argv):
   """read module states and display them graphically"""
 
   global _cols, _conf
@@ -54,10 +54,14 @@ def main(argv = sys.argv):
   _cols  = curses.tigetnum('cols')
 
   # init
-  _conf   = utils.load_json('etc/voe3t.json')
-  modules = _conf['watched_modules']; modules.reverse()
-  checks  = {m: arrow.get(0) for m in modules}
-  dirty   = True
+  _conf    = utils.load_json('etc/voe3t.json')
+  modules  = _conf['watched_modules']; modules.reverse()
+  checks   = {m: arrow.get(0) for m in modules}
+  dirty    = True
+  printers = {
+    'comp':   _print_comp,
+    'interp': _print_interp
+  }
   _log.info("oe3 state watcher initialized")
 
   # main loop
@@ -67,7 +71,7 @@ def main(argv = sys.argv):
       # find runfile
       running = None
       for module in modules:
-        if exists('run/{}.json'.format(module)):
+        if exists('run/{}.json'.format(module)) and module in printers:
           path = 'run/{}.json'.format(module)
           running = module
           break
@@ -78,12 +82,18 @@ def main(argv = sys.argv):
           os.system('clear')
           _print_clear()
           dirty = False
-      elif arrow.get(getmtime(path)) > checks[running]:
-        meta = utils.load_json(path)
-        checks[module] = arrow.now()
-        os.system('clear')
-        eval("_print_{module}(meta)".format(module=module))
-        dirty = True
+      elif exists(path) and arrow.get(getmtime(path)) > checks[running]:
+        try:
+          meta = utils.load_json(path)
+        except Exception as e:
+          _log.warning("exception: '{}' parsing json file '{}':\n{}".format(
+            e.__class__.__name__, path, open(path, 'r').read()))
+          time.sleep(1)
+        else:
+          checks[module] = arrow.now()
+          os.system('clear')
+          printers[module](meta)
+          dirty = True
 
       time.sleep(0.1)
 

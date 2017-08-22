@@ -19,6 +19,7 @@ import pprint
 import tarfile
 import tempfile
 
+import arrow
 from PIL import Image
 
 from oe3 import utils
@@ -33,13 +34,17 @@ class Estim(object):
 
   def __init__(self, meta_path=None):
     """set defaults, load data"""
-    self.id      = utils.tstamp()   # ie: 19711021.200000
-    self.name    = ''               # ie: twexus_lux_7
-    self.type    = 'base'           # ie: 'imagecoll'
-    self.source  = None             # ie: 'http://www.twexus.com/
-    self.date    = utils.datestr()  # date this estim was acquired
-    self.used    = []               # XXX list of songs that used this estim
-    self.data_path = None           # data file path (relative)
+
+    t    = arrow.get()
+    date = t.format('YYYY-MM-DD HH:mm:ss')
+    id   = t.format('YYYYMMDD.HHmmss')
+    self.id      = id      # ie: 19711021.200000
+    self.name    = ''      # ie: twexus_lux_7
+    self.type    = 'base'  # ie: 'imagecoll'
+    self.source  = None    # ie: 'http://www.twexus.com/
+    self.date    = date    # date this estim was acquired
+    self.used    = []      # XXX list of songs that used this estim
+    self.data_path = None  # data file path (relative)
     if meta_path is not None: self.load(meta_path)
 
   def __len__(self):
@@ -133,8 +138,10 @@ class ImageCollEstim(Estim):
   def add_image(self, path, source=None, date=None, resize=1024):
     """add an image with metadata to the collection"""
     log.debug("   adding image: %s", path)
-    if source is None: source = os.path.abspath(path)
-    if date   is None: date   = utils.datestr(os.stat(path).st_ctime)
+    if source is None:
+      source = os.path.abspath(path)
+    if date is None:
+      date = arrow.get(os.stat(path).st_ctime).format('YYYY-MM-DD HH:mm:ss')
     fname   = os.path.basename(path)
     imgnum  = '%03d' % (self.images
                         and max(int(i.info['id'][-3:]) for i in self.images) + 1

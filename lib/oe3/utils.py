@@ -24,19 +24,17 @@ import pprint
 import random
 import time
 import wave
-
-import arrow
-
 from commands import getstatusoutput
 from glob     import glob
 from shutil   import copyfileobj
 
+import arrow
 from jsonesque import process as json_clean
 from PIL import Image
 from PIL import ImageOps
 
 
-__version__ = '0.1.3'
+__version__ = '1.2.0'
 
 _log  = logging.getLogger('oe3')
 _conf = json.loads(json_clean(open('etc/oe3.json').read()))
@@ -130,11 +128,6 @@ def save_json(path, dict_, backup=False):
   if backup and os.path.isfile(path): os.rename(path, path + '~')
   with open(path, 'w') as f:
     json.dump(dict_, f, sort_keys=True, indent=2, separators=(',', ': '))
-
-def lastmod_runfile(module):
-  """find the last modified time for a runfile"""
-  return arrow.get(os.path.getmtime(
-    os.path.join(oe3_path, _conf['runfile_dir'], module + '.json')))
 
 def load_runfile(module):
   """load state data from runfile"""
@@ -289,20 +282,6 @@ def run_doctest(test):
   if f == 0: print 'no errors in', c, 'tests.'
 
 # time stuff ------------------------------------------------------------------
-def datestr(secs=None):
-  """return a formatted time string, ie: '2005-10-25 05:32:01'"""
-  if secs is None: secs = time.time()
-  return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(secs))
-
-def tstamp(secs=None, sep='.'):
-  """return a timestamp string, ie: '20051025.053201'"""
-  if secs is None: secs = time.time()
-  return time.strftime('%Y%m%d' + sep + '%H%M%S', time.gmtime(secs))
-
-def arrowts(time, ms=False):
-  """format an arrow instance as timestamp"""
-  return time.format('YYYYMMDD.HHmmss' + ('.SSS' if ms else ''))
-
 def secs2mmss(secs, show_ms=True):
   """format float seconds into an mm:ss[.SSS] string"""
   mmss = '{:2d}:{:02d}'.format(int(secs // 60), int(secs) % 60)

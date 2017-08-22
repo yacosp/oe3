@@ -15,6 +15,8 @@ from __future__ import division
 
 import logging
 
+import arrow
+
 from oe3 import utils
 from oe3.coag import estim
 
@@ -31,9 +33,12 @@ class Song(object):
   def __init__(self, meta_path=None):
     """set defaults, load data"""
 
-    self.id        = utils.tstamp()
+    t    = arrow.get()
+    date = t.format('YYYY-MM-DD HH:mm:ss')
+    id   = t.format('YYYYMMDD.HHmmss')
+    self.id        = id
     self.name      = ''
-    self.date      = utils.datestr()
+    self.date      = date
     self.estim     = None
     self.comp      = None   # (subcomp_class_name, subcomp_version)
     self.data_path = None
