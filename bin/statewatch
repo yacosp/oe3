@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
 # -*- backup-inhibited: true; encoding: utf-8 -*-
 #
+# bin/statewatch
+#
 # oveja eléctrica
 # copyright (c) 2003-2017 santiago peresón <yaco@yaco.net>
 # http://yaco.net/oe/
@@ -9,39 +11,42 @@
 # license, version 3. see LICENSE for full license details.
 #
 
-"""statewatch
-internal oe3 state watcher for voe3t
-
-usage: bin/statewatch
-"""
+"""internal oe3 state watcher for voe3t"""
 
 
 from __future__ import division, print_function, unicode_literals
 
-__version__ = '0.1.0'
+__version__ = '1.0.0'
 
+import argparse
 import curses
 import json
 import logging
 import os
 import sys
 import time
-
 from os.path import exists, getmtime
 
 import arrow
+import numpy
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../lib'))
 from oe3 import utils
 from oe3.comp.spectrofoto import pformat_choices
 
+
 _log  = logging.getLogger('voe3t')
 _conf = {}
+
 
 def main(argv = sys.argv):
   """read module states and display them graphically"""
 
   global _cols, _conf
+
+  # parse options
+  parser = argparse.ArgumentParser(description=__doc__)
+  args   = parser.parse_args()
 
   # get terminal size
   # XXX py3k: replace with os.get_terminal_size!
@@ -74,14 +79,11 @@ def main(argv = sys.argv):
           _print_clear()
           dirty = False
       elif arrow.get(getmtime(path)) > checks[running]:
-        try:
-          meta = utils.load_json(path)
-          checks[module] = arrow.now()
-          os.system('clear')
-          eval("_print_{module}(meta)".format(module=module))
-          dirty = True
-        except:
-          pass
+        meta = utils.load_json(path)
+        checks[module] = arrow.now()
+        os.system('clear')
+        eval("_print_{module}(meta)".format(module=module))
+        dirty = True
 
       time.sleep(0.1)
 
@@ -93,10 +95,7 @@ def _print_clear():
   """clear the viewer"""
 
   print("\n\n\n\n\n\n{}{:^{}}{}\n\n\n\n".format(
-    _setf(_conf['text_colors'][1]),
-    "⎡oe3 not running⎦", _cols,
-    _sgr0()
-  ))
+    _setf('normal'), "⎡oe3 not running⎦", _cols, _setf(None)))
 
 
 def _print_comp(meta):
@@ -107,7 +106,7 @@ def _print_comp(meta):
   else:
     reduxes = []
   _print_comp_header(meta)
-  _print_reduxes(reduxes[:51])  # XXX to-do: decide how to show bigger colls
+  _print_reduxes(reduxes)
   _print_comp_footer(meta)
   _print_progress(meta['progress'])
   sys.stdout.flush()
@@ -117,15 +116,19 @@ def _print_interp(meta):
   """print interp state: song meta, estim reduxes, choices, fake progress"""
 
   reduxes = [meta['reduxes'][img] for img in meta['img_idx']]
-  dur     = int(meta['duration'])
-  for i in xrange(dur + 1):
+  dur     = meta['duration']
+  start   = time.time()
+  end     = start + dur
+  while time.time() < end:
+    played = time.time() - start
+    prog   = played * 100 / dur
     os.system('clear')
     _print_interp_header(meta)
-    _print_reduxes(reduxes[:51])  # XXX to-do: decide how to show bigger colls
+    _print_reduxes(reduxes)
     _print_comp_footer(meta)
-    _print_progress(min(i * 100 / dur, 100))
+    _print_progress(prog)
     sys.stdout.flush()
-    time.sleep(0.75)
+    time.sleep(0.5)
   while exists('run/interp.son'): time.sleep(0.1)
 
 
@@ -138,7 +141,7 @@ def _print_comp_header(meta):
     estim_id   = meta['estim_id']
   )
   print("{}{:^{}}{}".format(
-    _setf(_conf['text_colors'][1]), header, _cols, _sgr0()))
+    _setf('normal'), header, _cols, _setf(None)))
 
 
 def _print_comp_footer(meta):
@@ -152,9 +155,7 @@ def _print_comp_footer(meta):
       asp, val  = tmp.split(':')
       if int(cert) > 50:
         termed += "{}:{}{}{} ".format(
-          asp, _setf(_conf['text_colors'][2]),
-          val, _setf(_conf['text_colors'][1])
-        )
+          asp, _setf('bright'), val, _setf('normal'))
       else:
         termed += asp + ':' + val + ' '
     # width: 87 [11 choices * (7 chars + space) - 1 space]
@@ -166,7 +167,7 @@ def _print_comp_footer(meta):
     pad = ' ' * ((_cols - 11) // 2)
 
   print("{}{}{}{}".format(
-    pad, _setf(_conf['text_colors'][1]), termed, _sgr0()))
+    pad, _setf('normal'), termed, _setf(None)))
 
 
 def _print_interp_header(meta):
@@ -179,27 +180,21 @@ def _print_interp_header(meta):
     duration = utils.secs2mmss(meta['duration']).strip()
   )
   print("{}{:^{}}{}".format(
-    _setf(_conf['text_colors'][1]), header, _cols, _sgr0()))
+    _setf('normal'), header, _cols, _setf(None)))
 
 
 def _print_progress(prog):
   """print progress bar"""
 
-  # '  [<bar><pad>]  '
   width  = _cols - 6
-  filled = max(int(prog * width / 100), 3)
-  pad    = ' ' * (width - filled) + _setf(21)
+  filled = numpy.clip(int(prog * width / 100 + 0.5), 3, width)
+  pad    = ' ' * (width - filled) + _setf('r5')
   if filled > width - 1:
     bar = '─' * filled + pad
   else:
     bar = '{}{}─{}─{}'.format(
-      '─' * (filled - 2),
-      _setf(_conf['redux_colors'][3]),
-      _setf(_conf['redux_colors'][1]),
-      pad
-    )
-  print("  {}⎡{}⎦{} ".format(
-    _setf(_conf['redux_colors'][5]), bar, _sgr0()), end='')
+      '─' * (filled - 2), _setf('r3'), _setf('r1'), pad)
+  print("  {}⎡{}⎦{} ".format(_setf('r5'), bar, _setf(None)), end='')
 
 
 def _print_reduxes(reduxes):
@@ -208,11 +203,11 @@ def _print_reduxes(reduxes):
   len_reduxes = len(reduxes)
   if len_reduxes == 0:
     print("\n\n\n\n{}{}⎡noestim⎦\n\n\n\n".format(
-      _setf(_conf['text_colors'][1]), ' ' * ((_cols - 9) // 2)))
+      _setf('normal'), ' ' * ((_cols - 9) // 2)))
   elif len_reduxes < 11:
-    print('\n\n')               # three lines
+    print('\n\n')
     _print_redux_line(reduxes)
-    print('\n\n')               # three lines
+    print('\n\n')
   elif len_reduxes < 29:
     half = -(-len_reduxes // 2)
     print()
@@ -221,11 +216,17 @@ def _print_reduxes(reduxes):
     _print_redux_line(reduxes[half:])
     print()
   else:
-    one_3rd  = -(-len_reduxes // 3)
+    #reduxes = reduxes[:51]  # XXX to-do: decide how to show bigger colls
+    max_reduxes = (_cols // 6) * 3
+    if len_reduxes > max_reduxes:
+      del reduxes[max_reduxes:]
+    one_3rd  = -(-len(reduxes) // 3)  # ceiling int division
     two_3rds = one_3rd * 2
     _print_redux_line(reduxes[:one_3rd])
     _print_redux_line(reduxes[one_3rd : two_3rds])
     _print_redux_line(reduxes[two_3rds:])
+    if len_reduxes > max_reduxes:
+      print('\x1b[1A\x1b[{}C{}…'.format(_cols - 1, _setf('bright')), end='')
 
 
 def _print_redux_line(reduxes):
@@ -242,25 +243,27 @@ def _redux2term(redux):
   """generate a three-tuple of 5-char strings for screen printing"""
 
   rlines = ["00000"] + [redux[i:i+5] for i in range(0, len(redux), 5)]
-  termed = [''.join(map(_tup2term, rlines[0], rlines[1])) + _sgr0(),
-            ''.join(map(_tup2term, rlines[2], rlines[3])) + _sgr0(),
-            ''.join(map(_tup2term, rlines[4], rlines[5])) + _sgr0()]
+  termed = [''.join(map(_tup2term, rlines[0], rlines[1])) + _setf(None),
+            ''.join(map(_tup2term, rlines[2], rlines[3])) + _setf(None),
+            ''.join(map(_tup2term, rlines[4], rlines[5])) + _setf(None)]
   return termed
 
 
 def _tup2term(top, bot):
   """char tuple to term sequence"""
 
-  return "{}{}▄".format(
-    _setb(_conf['redux_colors'][int(top)]),
-    _setf(_conf['redux_colors'][int(bot)])
-  )
+  return "{}{}▄".format(_setf('r' + top, bg=True), _setf('r' + bot))
 
 
-# term color functions
-def _setf(color): return "\x1b[38;5;{}m".format(color)
-def _setb(color): return "\x1b[48;5;{}m".format(color)
-def _sgr0():      return "\x1b[0m"
+def _setf(color, bg=False):
+  """generate a color term escape sequence"""
+
+  if color is not None:
+    fgbg = 38 if not bg else 48
+    return "\x1b[{};5;{}m".format(fgbg, _conf['colors'][color])
+  else:
+    return "\x1b[0m"
+
 
 if __name__ == "__main__":
   try:

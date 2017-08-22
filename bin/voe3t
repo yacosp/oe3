@@ -1,7 +1,9 @@
 #!/bin/bash
 # -*- backup-inhibited: true -*-
 #
-# oveja electrica - oe3.0.1:bleu
+# bin/voe3t
+#
+# oveja electrica
 # copyright (c) 2003-2017 santiago pereson <yaco@yaco.net>
 # http://yaco.net/oe/
 #
@@ -9,11 +11,21 @@
 # license, version 3. see LICENSE for full license details.
 #
 
-# voe3t
-# tmux-based e3 runner
-#
-# usage: bin/voe3
-#
+VERSION="1.0.0"
+
+case "$1" in
+    -h | --help )
+        cat <<EOF
+usage: voe3t [-h]
+
+tmux-based oe3 runner
+
+optional arguments:
+  -h, --help  show this help message and exit
+EOF
+        exit
+        ;;
+esac
 
 tmux -f etc/voe3t-tmux.conf \
      new-session  -svoe3t -nvoe3t 'bin/logtails -n100 -f var/log/oe3.log'\; \

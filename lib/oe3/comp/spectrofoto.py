@@ -217,7 +217,7 @@ class Spectrofoto(object):
       log.debug("   option: '%s', choice: %s;\n votes: %s\n certs: %s",
                 option, choices[option], votes, certs)
     self.song.choices = choices
-    log.info("anal: %s", pformat_choices(self.song.choices))
+    log.info("anal choices: %s", pformat_choices(self.song.choices))
     self._save_runfile(10)
 
   def _anal_choose(self, option, values, aspect, anal_value):
@@ -259,7 +259,7 @@ class Spectrofoto(object):
     if foption is None: return
     chist = self._choice_history(foption, fzlist)
     self._intra_modify_choices(foption, chist)
-    log.info("intra: %s", pformat_choices(self.song.choices))
+    log.info("intra choices: %s", pformat_choices(self.song.choices))
     self._save_runfile(13)
 
   def _intra_find_focus(self):
@@ -332,7 +332,7 @@ class Spectrofoto(object):
           self.song.choices[option] = (rchoice, 0)
           log.debug("   %s: %s (%s) -> %s: %s",
                     option, choice[0], choice[1], option, rchoice)
-    log.info("exm: %s", pformat_choices(self.song.choices))
+    log.info("exm choices: %s", pformat_choices(self.song.choices))
     self._save_runfile(17)
 
   # fixed_choices -------------------------------------------------------------
@@ -343,7 +343,7 @@ class Spectrofoto(object):
       for k, v in choices.iteritems():
         if v.isdigit(): v = int(v)
         self.song.choices[k] = (v, 0)
-      log.info("fixed: %s", pformat_choices(self.song.choices))
+      log.info("fixed choices: %s", pformat_choices(self.song.choices))
 
   def _fix_song_dur(self):
     """modify sect_base_time so song duration is within bounds"""
@@ -476,7 +476,6 @@ class Spectrofoto(object):
   def _prep_tracks(self, choices):
     """prepare mixlist for each track"""
     log.info("preparing tracks")
-    log.info("choices: %s", pformat_choices(self.song.choices))
     hsls = self._all_hsl_images(self.song.images)
     trackl = {}
     max_dur = 0
@@ -732,7 +731,6 @@ class Spectrofoto(object):
   def _gen_sources(self, trackl):
     """generate source soundfiles"""
     log.info("generating sound sources")
-    log.info("choices: %s", pformat_choices(self.song.choices))
     prog = 42
     for tid, tdata in trackl.iteritems():
       if tdata is not None:
@@ -848,12 +846,10 @@ class Spectrofoto(object):
   def _filter_sections(self, trackl):
     """generate each track"""
     log.info("generating %d tracks", len(trackl))
-    log.info("choices: %s", pformat_choices(self.song.choices))
     mixl = []
     prog = 60
     for tid, tdata in trackl.iteritems():
       log.debug("   generating track '%s' sections", tid)
-      log.info("choices: %s", pformat_choices(self.song.choices))
       if tdata['snd'] is not None:
         self._split_shared_sound(tid, tdata['snd'], tdata['sections'])
       partl = []
@@ -967,7 +963,6 @@ class Spectrofoto(object):
     """mix all sections"""
     # XXX to-do: fix sgdur
     log.info("mixing %d tracks", len(mixl))
-    log.info("choices: %s", pformat_choices(self.song.choices))
     share_path = os.path.join(oe3_path, 'share', 'spectrofoto')
     orc_path, sco_path = '%s.orc' % self.song.id, '%s.sco' % self.song.id
     csw_path, wav_path = '%s-cs.wav' % self.song.id, '%s.wav' % self.song.id
