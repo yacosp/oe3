@@ -21,7 +21,7 @@ import tempfile
 
 from PIL import Image
 
-from oe3 import utils, viewer
+from oe3 import utils
 
 
 log = logging.getLogger('coag')
@@ -38,7 +38,7 @@ class Estim(object):
     self.type    = 'base'           # ie: 'imagecoll'
     self.source  = None             # ie: 'http://www.twexus.com/
     self.date    = utils.datestr()  # date this estim was acquired
-    self.used    = []               # list of songs that used this estim
+    self.used    = []               # XXX list of songs that used this estim
     self.data_path = None           # data file path (relative)
     if meta_path is not None: self.load(meta_path)
 
@@ -56,22 +56,22 @@ class Estim(object):
     the estim data file type and content depends on the estim type
     """
     if meta_path is not None:
-      self._save_meta(meta_path)
+      self.save_meta(meta_path)
     # data should be saved to self.data_path
 
   def load(self, meta_path=None):
     """load estim from filesystem"""
     if meta_path is not None:
-      self._load_meta(meta_path)
+      self.load_meta(meta_path)
     # data should be loaded from self.data_path
 
-  def _save_meta(self, path):
+  def save_meta(self, path):
     """save metadata to filesystem"""
     self.size = len(self)
     utils.save_bzdict(path, self.__dict__)
     del self.size
 
-  def _load_meta(self, path):
+  def load_meta(self, path):
     """load metadata from filesystem"""
     self.__dict__ = utils.load_bzdict(path)
 
@@ -83,7 +83,7 @@ class ImageCollEstim(Estim):
     """set defaults, load data"""
     Estim.__init__(self)
     self.type      = 'imagecoll'
-    self.images    = [] # image (pil object) list
+    self.images    = []                   # image (pil object) list
     self.data_path = '%s.tar' % self.id
     self._index    = {}
     if meta_path is not None: self.load(meta_path)
@@ -98,7 +98,7 @@ class ImageCollEstim(Estim):
     tmp = self.images[:]
     index = self._index; del self._index
     self.images = [i.info for i in tmp]
-    self._save_meta(meta_path)
+    self.save_meta(meta_path)
     self.images = tmp
     self._index = index
     tar = tarfile.open(self._full_data_path(meta_path), 'w')
@@ -114,8 +114,7 @@ class ImageCollEstim(Estim):
   def load(self, meta_path=None):
     """load estim from filesystem"""
     log.info("loading estim from %s", meta_path)
-    index = self._index
-    self._load_meta(meta_path)
+    self.load_meta(meta_path)
     self._index = {}
     imgs_meta = self.images[:]
     log.debug("   '%s': %d images", self.name, len(imgs_meta))
@@ -171,10 +170,6 @@ class ImageCollEstim(Estim):
   def get_image(self, id):
     """image by id"""
     return self._index[id]
-
-  def show(self, show_images=False, cmd=None):
-    """show a gallery"""
-    viewer.Viewer().gallery(self.images, show_images).show(command=cmd)
 
   def _full_data_path(self, meta_path):
     """build a full path for the data file"""

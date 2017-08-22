@@ -1,50 +1,23 @@
-# oe3
+# oe3 stuff
+dev/
+run/*
+!run/README
+tmp/*
+tmp/comp/*
+!tmp/comp/README
 var/estim/*
 !var/estim/README
 var/log/*
 !var/log/README
 var/opus/*
 !var/opus/README
-var/state/*
-!var/state/README
-tmp/comp/*
-!tmp/comp/README
+var/lib/*
+!var/lib/README
+!var/lib/anatta.json
 
-# backup files
+# otres
 *~
-
-# byte-compiled / optimized / dll files
 __pycache__/
 *.py[cod]
-*$py.class
-
-# c extensions
-*.so
-
-# distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-parts/
-sdist/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-
-# env
-.env
 .envrc
-.venv
-venv/
 env/
-ENV/

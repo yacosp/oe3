@@ -1,4 +1,4 @@
-# oe3 lib/oe3/comp/spectrofoto.py
+# oe3 lib/oe3/comp/spectrofoto.py  -*- encoding: utf-8 -*-
 #
 # oveja electrica - oe3.0.1:bleu
 # copyright (c) 2003-2017 santiago pereson <yaco@yaco.net>
@@ -31,7 +31,7 @@ from PIL import ImageFilter
 from PIL import ImageStat
 import numpy
 
-from oe3 import oe3_path, utils, viewer
+from oe3 import oe3_path, utils
 from oe3.crit import MAX_REWARD
 from oe3.opus import song
 from oe3.utils import iround, mean, shexec, stdev
@@ -41,6 +41,9 @@ __version__ = '0.1.2'
 
 conf_path = os.path.join(oe3_path, 'etc/spectrofoto.conf')
 log = logging.getLogger('comp')
+
+tbr_pretty = {'s': u'··s', 'p': u'·p·', 'ps': u'·ps',
+              'b': u'b··', 'bs': u'b·s', 'bp': u'bp·', 'bps': 'bps'}
 
 
 #------------------------------------------------------------------------------
@@ -65,13 +68,13 @@ class Spectrofoto(object):
   def learn(self, song, reward):
     """learn from a reward"""
     log.info("learning reward %s for song '%s'", reward, song.id)
-    self.state['histo'].append((
-      song.id,
-      song.estim.id,
-      song.anal.copy(),
-      song.choices.copy(),
-      reward))
+    self.state['histo'].append((song.id, song.estim.id, song.anal.copy(),
+                                song.choices.copy(), reward))
     self.save_state()
+    spath = os.path.join(oe3_path, 'var/opus', song.id + '.pyd.bz2')
+    smeta = utils.load_bzdict(spath)
+    smeta['reward'] = reward
+    utils.save_bzdict(spath, smeta)
 
   # init song -----------------------------------------------------------------
   def _init_song(self, estim, seed=None):
@@ -79,19 +82,20 @@ class Spectrofoto(object):
     if seed is None: seed = time.time()
     log.info("initializing new song with estim: %s and seed: %s",
              estim.id, seed)
-    self.song = song.Song(estim, (self.__class__.__name__, __version__))
+    self.song = song.Song()
+    self.song.estim = estim
+    self.song.comp  = (self.__class__.__name__, __version__)
     log.debug("   song id is %s", self.song.id)
     self.song.seed = seed
     random.seed(self.song.seed)
     self.song.images = [i.resize((192, 192), Image.ANTIALIAS)
                         for i in self.song.estim.images]
+    self.song.img_idx = [img.info['id'] for img in self.song.images]
     self.song.img_medians = {}
+    self._save_runfile(5)
     self.song.tmpd = os.path.join(oe3_path, 'tmp/comp', self.song.id + '.tmp')
     os.mkdir(self.song.tmpd)
     os.chdir(self.song.tmpd)
-    log.debug("   generating estim gallery")
-    gal = self.viewer.gallery(self.song.estim.images, self.conf['show_images'])
-    #gal.show(command=(self.conf['viewer_estim_cmd'] % estim.name))
 
 
   # analyze estim -------------------------------------------------------------
@@ -100,6 +104,7 @@ class Spectrofoto(object):
     get (min, max, range, mean, stdev) of
     (r, g, b, l, l_top, l_mid, l_bottom, distance)
     """
+    # XXX check the statistics standard lib module
     log.info("analyzing estim")
     aspects = ('red', 'grn', 'blu', 'gry', 'top', 'mid', 'btm')
     self.song.anal = {'num_images': len(self.song.images)}
@@ -209,10 +214,11 @@ class Spectrofoto(object):
         certs[choice].append(cert)
       winner = utils.max_key(votes)
       choices[option] = (winner, int(utils.mean(certs[winner])))
-      log.debug("   option: '%s', choice: %s;\n votes: %s\n certs: %s\n",
+      log.debug("   option: '%s', choice: %s;\n votes: %s\n certs: %s",
                 option, choices[option], votes, certs)
     self.song.choices = choices
-    log.info("anal choices: %s", self._pformat_choices(self.song.choices))
+    log.info("anal choices: %s", pformat_choices(self.song.choices))
+    self._save_runfile(10)
 
   def _anal_choose(self, option, values, aspect, anal_value):
     """
@@ -253,7 +259,8 @@ class Spectrofoto(object):
     if foption is None: return
     chist = self._choice_history(foption, fzlist)
     self._intra_modify_choices(foption, chist)
-    log.info("intra choices: %s", self._pformat_choices(self.song.choices))
+    log.info("intra choices: %s", pformat_choices(self.song.choices))
+    self._save_runfile(13)
 
   def _intra_find_focus(self):
     """find choice with highest cert"""
@@ -261,9 +268,9 @@ class Spectrofoto(object):
                         for option, choice in self.song.choices.iteritems())
     foption = utils.max_key(choice_certs)
     fchoice, fcert = self.song.choices[foption]
-    log.debug("   focus: %s: %s (%s)", foption, fchoice, fcert)
+    log.debug("   focus ch.: %s: %s (%s)", foption, fchoice, fcert)
     if not utils.rand_below(fcert):
-      log.debug("   low focus cert: %s. leaving choices alone.", fcert)
+      log.debug("   low focus cert : %s. leaving choices alone.", fcert)
       return None, None  # shortcircuit
     fzone = utils.hml_find_zone(self.conf['choice_tpl'][foption], fchoice)
     if fzone == 0:
@@ -325,7 +332,8 @@ class Spectrofoto(object):
           self.song.choices[option] = (rchoice, 0)
           log.debug("   %s: %s (%s) -> %s: %s",
                     option, choice[0], choice[1], option, rchoice)
-    log.info("exm choices: %s", self._pformat_choices(self.song.choices))
+    log.info("exm choices: %s", pformat_choices(self.song.choices))
+    self._save_runfile(17)
 
   # fixed_choices -------------------------------------------------------------
   def _fixed_choices(self, choices):
@@ -335,11 +343,11 @@ class Spectrofoto(object):
       for k, v in choices.iteritems():
         if v.isdigit(): v = int(v)
         self.song.choices[k] = (v, 0)
-      log.info("fixed choices: %s", self._pformat_choices(self.song.choices))
+      log.info("fixed choices: %s", pformat_choices(self.song.choices))
 
   def _fix_song_dur(self):
     """modify sect_base_time so song duration is within bounds"""
-    # XXX this should be cleaned up!
+    # XXX this should be cleaned up! + check that -m _without_ -M works!
     len_estim = len(self.song.estim.images)
     sbt_vals  = self.conf['choice_tpl']['sect_base_time']
     log.debug("   len_estim: %d; sbt: %d; result dur: %d",
@@ -352,18 +360,21 @@ class Spectrofoto(object):
     try:
       while self.song.choices['sect_base_time'][0] * len_estim < min_sd:
         idx = sbt_vals.index(self.song.choices['sect_base_time'][0])
-        log.warning("   forced min song duration, fixing sbt. %s -> %s", sbt_vals[idx], sbt_vals[idx + 1])
+        log.warning("   forced min song duration, fixing sbt. %s -> %s",
+                    sbt_vals[idx], sbt_vals[idx + 1])
         self.song.choices['sect_base_time'] = (sbt_vals[idx + 1], 0)
     except IndexError:
       log.warning("   cannot reduce sbt any more!")
     try:
       while self.song.choices['sect_base_time'][0] * len_estim > max_sd:
         idx = sbt_vals.index(self.song.choices['sect_base_time'][0])
-        log.warning("   forced max song duration, fixing sbt. %s -> %s", sbt_vals[idx], sbt_vals[idx - 1])
+        log.warning("   forced max song duration, fixing sbt. %s -> %s",
+                    sbt_vals[idx], sbt_vals[idx - 1])
         self.song.choices['sect_base_time'] = (sbt_vals[idx - 1], 0)
     except IndexError:
       log.warning("   cannot increment sbt any more!")
-    # other fixed choices
+    # XXX other fixed choices?
+    self._save_runfile(20)
 
 
   # create song ---------------------------------------------------------------
@@ -373,6 +384,7 @@ class Spectrofoto(object):
     choices = dict((k, v[0]) for k, v in self.song.choices.iteritems())
     self._resort_images(choices)
     trackl = self._prep_tracks(choices)
+    self._save_runfile(42)
     self._gen_sources(trackl)
     mixl = self._filter_sections(trackl)
     self._mix_tracks(mixl)
@@ -385,16 +397,16 @@ class Spectrofoto(object):
     getattr(self, '_resort_%s' % choices['sort'])()
     log.debug("   sorted:      %s",
               [img.info['id'][-3:] for img in self.song.images])
+    self._save_runfile(22)
     getattr(self, '_resort_%s' % choices['randomize'])()
     log.debug("   randomized:  %s",
               [img.info['id'][-3:] for img in self.song.images])
+    self._save_runfile(24)
     getattr(self, '_resort_%s' % choices['transform'])()
     log.debug("   transformed: %s",
               [img.info['id'][-3:] for img in self.song.images])
     self.song.img_idx = [img.info['id'] for img in self.song.images]
-    log.debug("   generating resorted estim gallery")
-    gal = self.viewer.gallery(self.song.images, self.conf['show_images'])
-    #gal.show(command=self.conf['viewer_procestim_cmd'])
+    self._save_runfile(26)
 
   def _resort_none(self): pass
 
@@ -464,7 +476,6 @@ class Spectrofoto(object):
   def _prep_tracks(self, choices):
     """prepare mixlist for each track"""
     log.info("preparing tracks")
-    log.info("choices: %s", self._pformat_choices(self.song.choices))
     hsls = self._all_hsl_images(self.song.images)
     trackl = {}
     max_dur = 0
@@ -578,7 +589,7 @@ class Spectrofoto(object):
     for img in images:
       log.debug("   splitting '%s' hsl channels", img.info['id'])
       hsl['h'], hsl['s'], hsl['l'] = utils.image_hsl_split(img)
-      if self.conf['hsl_grayscale_kluge']:
+      if self.conf['hsl_gray_kluge']:
         if max(hsl['h'].getdata()) < 11:
           hsl['h'] = hsl['l']
           log.debug("   hsl grayscale kluge: channel 'H' copied from 'L'!")
@@ -720,7 +731,7 @@ class Spectrofoto(object):
   def _gen_sources(self, trackl):
     """generate source soundfiles"""
     log.info("generating sound sources")
-    log.info("choices: %s", self._pformat_choices(self.song.choices))
+    prog = 42
     for tid, tdata in trackl.iteritems():
       if tdata is not None:
         if tdata['img'] is not None:  # shared source image
@@ -732,6 +743,8 @@ class Spectrofoto(object):
             sect['snd'] = self._gen_one_source(tid, sect['img'],
                                                sect['dur'],
                                                '%02d' % i)
+      prog += 6
+      self._save_runfile(prog)
 
   def _gen_one_source(self, tid, img_ref, dur, idpost):
     """generate one sound source"""
@@ -787,7 +800,7 @@ class Spectrofoto(object):
     log.debug("   sox amp: %7.3f", amp)
     shexec('sox -r %d %s %s vol %.3f', srate, ens_fname, fname, amp)
 
-  def _gen_sound_s(self, img, dur, fname, norm=True):
+  def _gen_sound_s(self, img, dur, fname, norm=False):
     """generate a sinoide source sound"""
     # XXX to-do: cache <one_sec>s
     bands = self._image_split_bands(img, self.conf['sinoid_range'])
@@ -833,11 +846,10 @@ class Spectrofoto(object):
   def _filter_sections(self, trackl):
     """generate each track"""
     log.info("generating %d tracks", len(trackl))
-    log.info("choices: %s", self._pformat_choices(self.song.choices))
     mixl = []
+    prog = 60
     for tid, tdata in trackl.iteritems():
       log.debug("   generating track '%s' sections", tid)
-      log.info("choices: %s", self._pformat_choices(self.song.choices))
       if tdata['snd'] is not None:
         self._split_shared_sound(tid, tdata['snd'], tdata['sections'])
       partl = []
@@ -845,6 +857,8 @@ class Spectrofoto(object):
                           tdata['sections']):
         if sdata['bands']:
           partl.append(self._filter_section(tid, sdata, i))
+        prog += 10 / len(tdata['sections'])
+        self._save_runfile(int(prog))
       mixl.append([tdata['start'], partl])
     self.song.mixlist = mixl
     log.debug("   saving mixlist ...")
@@ -867,7 +881,7 @@ class Spectrofoto(object):
       sdata['snd'] = ewf_fname
 
   def _filter_section(self, tid, sdata, i):
-    """apply bpfs to source parts using csound"""
+    """apply bpfs to source parts using ecasound"""
     log.debug("   applying filters to section %02d @ %s",
               i, [b['center'] for b in sdata['bands']])
     src_fname = sdata['snd']
@@ -949,7 +963,6 @@ class Spectrofoto(object):
     """mix all sections"""
     # XXX to-do: fix sgdur
     log.info("mixing %d tracks", len(mixl))
-    log.info("choices: %s", self._pformat_choices(self.song.choices))
     share_path = os.path.join(oe3_path, 'share', 'spectrofoto')
     orc_path, sco_path = '%s.orc' % self.song.id, '%s.sco' % self.song.id
     csw_path, wav_path = '%s-cs.wav' % self.song.id, '%s.wav' % self.song.id
@@ -981,33 +994,19 @@ class Spectrofoto(object):
 
   # wrap song -----------------------------------------------------------------
   def _wrap_song(self):
-    """
-    move files, copy estim, save meta, remove temp dir
+    """move files, copy estim, save meta, remove temp dir"""
 
-    dir struct:
-      <song_id>.pyd.bz2
-      <song_id>.wav
-      <song_id>.tar
-        |- <song_id>.orc
-        |- <song_id>.sco
-        |- anal.pyd.bz2
-        |- choices.pyd.bz2
-        |- tracklist.pyd.bz2
-        |- mixlist.pyd.bz2
-        |- <estim_id>.pyd.bz2
-        `- <estim_id>/
-             |- <img_id>.<ext>
-             `- ...
-    """
     # XXX clean up...
     log.info("wrapping song")
-    sid  = self.song.id
-    base = os.path.join(oe3_path, 'var/opus', sid)
-    wpath, mpath = base + '.wav', base + '.pyd.bz2'
+    sid   = self.song.id
+    base  = os.path.join(oe3_path, 'var/opus', sid)
+    wpath = base + '.wav'
+
     # move wav
-    log.debug("   moving wav to %s", wpath)
+    log.debug("   moving wav from %s to %s", self.song.sfile, wpath)
     os.rename(self.song.sfile, wpath)
     self.song.sfile = wpath
+
     # move tmp files
     log.debug("   creating tar archive: %s.tar", base)
     os.mkdir(base)
@@ -1016,19 +1015,21 @@ class Spectrofoto(object):
       os.rename(f, os.path.join(base, f))
     os.chdir(os.path.join(oe3_path, 'var/opus'))
     tarfile.open(sid + '.tar', 'w').add(sid)
+
     # copy estim
+    # XXX this is NOT working!
     epath = os.path.join(base, self.song.estim.id + '.pyd.bz2')
     log.debug("   copying estim to %s", epath)
     self.song.estim.save(epath)
+
     # save metadata
-    log.debug("   saving metadata to %s", mpath)
+    # XXX should save opus number in song and comp state
     wparams = wave.open(wpath, 'r').getparams()
     self.song.dur = wparams[3] / wparams[2]
-    meta = dict((k, v) for k, v in self.song.__dict__.iteritems() if k in
-                ('anal', 'choices', 'comp', 'dur', 'id', 'img_anomaly',
-                 'img_distances', 'img_idx', 'img_medians', 'seed'))
-    meta['sfile'] = sid + '.ogg'
-    utils.save_bzdict(mpath, meta)
+    self.song.img_reduxes = {i.info['id']:i.info['redux']
+                             for i in self.song.images}
+    self.song.save_meta(base + '.pyd.bz2')
+
     # encode wav
     log.debug("   oggencoding ...")
     date = "%s-%s-%s %s:%s:%s" % (sid[:4], sid[4:6], sid[6:8],
@@ -1039,11 +1040,14 @@ class Spectrofoto(object):
            date=date, sid=sid, wav=wpath)
     os.unlink(wpath)
     self.song.sfile= base + '.ogg'
+
     # clean up
     log.debug("   cleaning up ...")
     shutil.rmtree(sid)
     os.chdir(oe3_path)
     shutil.rmtree(self.song.tmpd)
+    self._save_runfile(100)
+    self._save_runfile(100, clear=True)
 
 
   # history stuff -------------------------------------------------------------
@@ -1075,7 +1079,6 @@ class Spectrofoto(object):
     log.info("initializing new spectrofoto subcomposer, id: %s", id(self))
     log.debug("   loading conf from %s", conf_path)
     self.conf = utils.load_dict(conf_path)
-    self.viewer = viewer.Viewer()
     state_path = os.path.join(oe3_path, self.conf['state_path'])
     if os.path.isfile(state_path):
       log.debug("   loading state from %s", state_path)
@@ -1103,29 +1106,30 @@ class Spectrofoto(object):
     if path is None: path = os.path.join(oe3_path, self.conf['state_path'])
     self.state = utils.load_bzdict(path)
 
+  def _save_runfile(self, prog, clear=False):
+    """save comp state to runfile"""
+    if clear:
+      utils.save_runfile('comp', {});
+      log.debug("   clearing comp runfile...")
+      return  # shortcircuit
+    #log.debug("   updating comp runfile...")
+    meta = {k: v for k, v in self.song.__dict__.items() if k in
+            ('anal', 'choices', 'comp', 'dur', 'id', 'img_anomaly',
+             'img_distances', 'img_idx', 'img_medians', 'seed')}
+    meta['estim_id']   = self.song.estim.id
+    meta['estim_name'] = self.song.estim.name
+    meta['reduxes']    = {i.info['id']:i.info['redux']
+                         for i in self.song.images}
+    meta['progress']   = prog
+    utils.save_runfile('comp', meta)
+    if self.conf['sleep_on_update'] != 0:
+      time.sleep(self.conf['sleep_on_update'])
+
   def _play_demo_sound(self, fname):
     """play a demo of one sound"""
     if self.conf['play_demos']:
       log.debug("   playing first bit of %s", fname)
       utils.play_sound(fname, 3.0)
-
-  def _pformat_choices(self, choices):
-    """format choices for printing"""
-    ckeys = (('sort', 'srt'), ('randomize', 'rnd'), ('transform', 'tfm'),
-             ('sect_base_time', 'sbt'), ('sect_dur_ratio', 'sdr'),
-             ('sect_align', 'sal'), ('env_follow', 'efl'),
-             ('transitions', 'tns'), ('timbres', 'tbr'),
-             ('spectrum_source', 'src'), ('filter', 'flt'))
-    # XXX esto es hoyyible
-    return '  '.join('%s %3s %02d' % (v,
-                                      (isinstance(choices[k][0], int)
-                                       and '%03d' % choices[k][0]
-                                       or (choices[k][0][:4] == 'inv_'
-                                           and (choices[k][0][:2] +
-                                                choices[k][0][4])
-                                           or choices[k][0][:3])),
-                                      choices[k][1])
-                     for k, v in ckeys)
 
   def _history_table(self):
     """generate a table view of the history"""
@@ -1159,6 +1163,28 @@ class Spectrofoto(object):
       tbl += '%2d  %2d %s  %s  %+d\n' % (i, row[2]['num_images'], anal,
                                       choices, row[4][0])
     return tbl
+
+def pformat_choices(choices, joined=True):
+  """format choices for printing"""
+
+  ckeys = (('sort', 'srt'), ('randomize', 'rnd'), ('transform', 'tfm'),
+           ('sect_base_time', 'sbt'), ('sect_dur_ratio', 'sdr'),
+           ('sect_align', 'sal'), ('env_follow', 'efl'),
+           ('transitions', 'tns'), ('timbres', 'tbr'),
+           ('spectrum_source', 'src'), ('filter', 'flt'))
+
+  # XXX esto es hoyyible
+  choice_l = ('%s:%3s.%02d' % (v,
+                               (isinstance(choices[k][0], int)
+                                and '%03d' % choices[k][0]
+                                or (choices[k][0][:4] == 'inv_'
+                                    and (choices[k][0][:2] +
+                                         choices[k][0][4]))
+                                or (v == 'tbr' and tbr_pretty[choices[k][0]])
+                                or choices[k][0][:3]),
+                               choices[k][1])
+              for k, v in ckeys)
+  return ' '.join(choice_l) if joined else choice_l
 
 #------------------------------------------------------------------------------
 if __name__ == '__main__':

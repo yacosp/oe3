@@ -9,7 +9,11 @@
 # license, version 3. see LICENSE for full license details.
 #
 
-"""run all doctests"""
+"""run_all_doctests
+run all doctests
+
+usage: bin/run_all_doctests
+"""
 
 
 from __future__ import division

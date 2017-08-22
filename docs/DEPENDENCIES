@@ -2,12 +2,13 @@
 DEPENDENCIES
 --------------------------------------------------------------------------------
 
-python 2.7 (psf)
-enscribe 0.1.0 (gpl)
-sox 14.4.1 (gpl)
+csound 6.08 (lgpl)
 ecasound 2.9.1 (gpl, bsd, lgpl)
 ecatools 2.9.1 (gpl, bsd, lgpl)
-csound 6.08 (lgpl)
+enscribe 0.1.0 (gpl)
+python 2.7 (psf)
+sox 14.4.1 (gpl)
+tmux 2.3 (isc)
 vorbis-tools 1.4 (gpl)
 
 python libs are listed in the docs/python-requirements.txt file, ready to be

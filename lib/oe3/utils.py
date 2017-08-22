@@ -15,6 +15,8 @@ from __future__ import division
 
 import bz2
 import colorsys
+import json
+import logging
 import math
 import os
 import ossaudiodev
@@ -22,12 +24,25 @@ import pprint
 import random
 import time
 import wave
-from commands import getstatusoutput
 
+import arrow
+
+from commands import getstatusoutput
+from glob     import glob
+from shutil   import copyfileobj
+
+from jsonesque import process as json_clean
 from PIL import Image
 from PIL import ImageOps
 
-from oe3 import oe3_path
+
+__version__ = '0.1.3'
+
+_log  = logging.getLogger('oe3')
+_conf = json.loads(json_clean(open('etc/oe3.json').read()))
+
+# oe3/__init__.py uses some util functions, so it can't be imported
+oe3_path = os.path.abspath(os.path.dirname(__file__) + '/../..')
 
 
 # data structure stuff --------------------------------------------------------
@@ -86,23 +101,72 @@ def load_dict(path):
   """load a dict from a text file"""
   return eval(open(path, 'r').read())
 
-def save_dict(path, dct, backup=False):
+def save_dict(path, dict_, backup=False):
   """save a dict to a text file"""
-  if not pprint.isreadable(dct):
+  if not pprint.isreadable(dict_):
     raise ValueError("dict contains non-printable data")
   if backup and os.path.isfile(path): os.rename(path, path + '~')
-  open(path, 'w').write(pprint.pformat(dct))
+  open(path, 'w').write(pprint.pformat(dict_))
 
 def load_bzdict(path):
   """load a dict from a bz2 compressed text file"""
   return eval(bz2.BZ2File(path, 'r').read())
 
-def save_bzdict(path, dct, backup=False):
+def save_bzdict(path, dict_, backup=False):
   """save a dict to a bz2 compressed text file"""
-  if not pprint.isreadable(dct):
+  if not pprint.isreadable(dict_):
     raise ValueError("dict contains non-printable data")
   if backup and os.path.isfile(path): os.rename(path, path + '~')
-  bz2.BZ2File(path, 'w').write(pprint.pformat(dct))
+  bz2.BZ2File(path, 'w').write(pprint.pformat(dict_))
+
+def load_json(path):
+  """load a dict from a json file"""
+  with open(path) as f:
+    dict_ = json.loads(json_clean(f.read()))
+  return dict_
+
+def save_json(path, dict_, backup=False):
+  """save a dict to a json file"""
+  if backup and os.path.isfile(path): os.rename(path, path + '~')
+  with open(path, 'w') as f:
+    json.dump(dict_, f, sort_keys=True, indent=2, separators=(',', ': '))
+
+def lastmod_runfile(module):
+  """find the last modified time for a runfile"""
+  return arrow.get(os.path.getmtime(
+    os.path.join(oe3_path, _conf['runfile_dir'], module + '.json')))
+
+def load_runfile(module):
+  """load state data from runfile"""
+  return load_json(os.path.join(oe3_path,
+                                _conf['runfile_dir'], module + '.json'))
+
+def save_runfile(module, meta):
+  """save state data to runfile"""
+  path = os.path.join(oe3_path, _conf['runfile_dir'], module + '.json')
+  if meta != {}:
+    meta['module']  = module
+    meta['updated'] = arrow.utcnow().format('YYYYMMDD.HHmmss.SSS')
+    if os.path.isfile(path) and False:
+      os.rename(
+        path, "{}~{}".format(path, arrow.now().format('YYYYMMDD.HHmmss.SSS'))
+      )
+    save_json(path, meta)
+  else:
+    os.remove(path)
+
+def compress_logs():
+  """compress old logs"""
+  logs = glob(
+    oe3_path + '/var/log/oe3.log.[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+  )
+  if len(logs):
+    _log.info(u"compressing logs...")
+    for logfile in logs:
+      with open(logfile, 'rb') as infile:
+        with bz2.BZ2File(logfile + '.bz2', 'wb') as outfile:
+          copyfileobj(infile, outfile)
+      os.remove(logfile)
 
 def int2le16(val):
   """python 16-bit int -> 16bit little-endian data (str)"""
@@ -120,11 +184,12 @@ def reduce_image(image, width, height, levels=None, normalize=True):
 
 def _reduce_depth_table(levels):
   """posterize filter table for a grayscale image .point() function"""
+  # XXX this is reducing to levels + 1 ?
   lstep = 256 / levels
   vstep = 255 / (levels - 1)
   ft    = []
   for i in range(levels):
-    ft    += [int(vstep * i)] * int(lstep)
+    ft += [int(vstep * i)] * int(lstep)
     if lstep * (i + 1) > len(ft): ft += [int(vstep * i)]
   return ft
 
@@ -217,7 +282,7 @@ def play_sound(sfile, dur=None):
 def run_doctest(test):
   """run one module's doctest"""
   import doctest, os
-  os.chdir(os.path.join(oe3_path + '/lib'))
+  os.chdir(os.path.join(oe3_path, '/lib'))
   f, c = doctest.testfile(
     os.path.join(oe3_path, 'lib/oe3/test/%s.doctest' %  test),
     module_relative=False)
@@ -233,6 +298,16 @@ def tstamp(secs=None, sep='.'):
   """return a timestamp string, ie: '20051025.053201'"""
   if secs is None: secs = time.time()
   return time.strftime('%Y%m%d' + sep + '%H%M%S', time.gmtime(secs))
+
+def arrowts(time, ms=False):
+  """format an arrow instance as timestamp"""
+  return time.format('YYYYMMDD.HHmmss' + ('.SSS' if ms else ''))
+
+def secs2mmss(secs, show_ms=True):
+  """format float seconds into an mm:ss[.SSS] string"""
+  mmss = '{:2d}:{:02d}'.format(int(secs // 60), int(secs) % 60)
+  if show_ms: mmss += '{:.3f}'.format(secs)[-4:]
+  return mmss
 
 # other stuff -----------------------------------------------------------------
 def shexec(cmd, *args, **kwargs):

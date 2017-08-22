@@ -12,10 +12,10 @@
 # http://mithrandr.moria.org/blog/147.html
 #
 
-"""
+"""logtails
 oe3 log tail colorized viewer
 
-usage: tail.py <file>
+usage: bin/logtails [-f] [-n <lines>] <file>
 """
 
 import curses
@@ -35,7 +35,7 @@ cols = term.COLS - 3
 date_re = re.compile(r'^[0-9]{8}\.[0-9]{6}\.[0-9]{3}')
 level = 'I'
 levelcolor = {'C': term.RED + term.BOLD, 'E': term.RED,
-              'W': term.YELLOW, 'I': term.NORMAL, 'D': term.CYAN}
+              'W': term.MAGENTA, 'I': term.CYAN, 'D': term.BLUE}
 wrapper = TextWrapper(width=(term.COLS - 3), replace_whitespace=False,
                       subsequent_indent='>> ')
 
@@ -45,9 +45,9 @@ def handle_line(line):
     lline = len(line)
     if lline == 0: return  # shortcircuit
     if lline > cols: line = wrapper.fill(line)
-    if date_re.match(line):
+    if date_re.match(line) and levelcolor.has_key(line[27]):
         level = line[27]
-        print ''.join([term.MAGENTA, line[:20],
+        print ''.join([term.BLUE, line[:20],
                        term.BLUE, term.BOLD, line[20:27], term.NORMAL,
                        levelcolor[level], line[27:48],
                        line[48:], term.NORMAL])
@@ -78,7 +78,9 @@ def tail_lines(fd, linesback = 10):
 
 def do_tail(filename, lines, follow, func = handle_line):
     if not os.path.exists(filename):
-        print ''.join([term.RED, "logtails: waiting for file '", filename, "'..."])
+        print ''.join(
+            [term.RED, "logtails: waiting for file '", filename, "'..."]
+        )
         while not os.path.exists(filename): time.sleep(1)
     fd = open(filename, 'r')
     for line in tail_lines(fd, lines):
@@ -103,12 +105,21 @@ def do_tail(filename, lines, follow, func = handle_line):
 
 def main(argv = sys.argv):
     parser = OptionParser()
-    parser.add_option("-n", "--number", action="store", type="int", dest = "number", default=10)
-    parser.add_option("-f", "--follow", action="store_true", dest = "follow", default=0)
+    parser.add_option("-n", "--number", action="store", type="int",
+                      dest="number", default=100)
+    parser.add_option("-f", "--follow", action="store_true",
+                      dest="follow", default=1)
     (options, args) = parser.parse_args()
+    if len(args) == 0:
+        print u"tailin default log at var/log/oe3.log..."
+        args += ['var/log/oe3.log']
+    if len(args) != 1:
+        print __doc__
+        return 0
     do_tail(args[0], options.number, options.follow, handle_line)
 
 if __name__ == "__main__":
     try:
         main(sys.argv)
-    except KeyboardInterrupt: pass
+    except KeyboardInterrupt:
+      print(); exit(130)

@@ -9,7 +9,8 @@
 # license, version 3. see LICENSE for full license details.
 #
 
-"""add ImageCollEstim objects to the coag repository (var/estim)
+"""coag_add_ice
+add ImageCollEstim objects to the coag repository (var/estim)
 
 usage: bin/coag_add_ice [options] <image> ...
 
@@ -17,7 +18,7 @@ options:
   -n NAME, --name=NAME    estim name
   -s TEXT, --source=TEXT  estim source
   -p TEXT, --prefix=TEXT  individual image source prefix (basename appended)
-  -d DATE, --date=DATE    date ('YYYY-MM-DD HH:MM:SS')
+  -d DATE, --date=DATE    date ('YYYY-MM-DD[ HH:MM:SS]')
   -D, --all-dates         use estim date for images
   -h, --help              show this help message and exit
 
@@ -31,6 +32,7 @@ import bz2
 import getopt
 import os
 import pprint
+import re
 import sys
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../lib'))
@@ -77,6 +79,10 @@ def main(argv=None):
     if len(args) == 0:
         print "won't create an empty estim!"
         exit(1)
+
+    # add missing time to date
+    if re.match(r'^[0-9]{4}-[0-9]{2}-[0-9]{2}$', date) is not None:
+        date += ' 00:00:00'
 
     # create estim
     print 'creating estim...'
