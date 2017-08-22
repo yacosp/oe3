@@ -56,22 +56,22 @@ class Estim(object):
     the estim data file type and content depends on the estim type
     """
     if meta_path is not None:
-      self._save_meta(meta_path)
+      self.save_meta(meta_path)
     # data should be saved to self.data_path
 
   def load(self, meta_path=None):
     """load estim from filesystem"""
     if meta_path is not None:
-      self._load_meta(meta_path)
+      self.load_meta(meta_path)
     # data should be loaded from self.data_path
 
-  def _save_meta(self, path):
+  def save_meta(self, path):
     """save metadata to filesystem"""
     self.size = len(self)
     utils.save_bzdict(path, self.__dict__)
     del self.size
 
-  def _load_meta(self, path):
+  def load_meta(self, path):
     """load metadata from filesystem"""
     self.__dict__ = utils.load_bzdict(path)
 
@@ -98,7 +98,7 @@ class ImageCollEstim(Estim):
     tmp = self.images[:]
     index = self._index; del self._index
     self.images = [i.info for i in tmp]
-    self._save_meta(meta_path)
+    self.save_meta(meta_path)
     self.images = tmp
     self._index = index
     tar = tarfile.open(self._full_data_path(meta_path), 'w')
@@ -114,8 +114,7 @@ class ImageCollEstim(Estim):
   def load(self, meta_path=None):
     """load estim from filesystem"""
     log.info("loading estim from %s", meta_path)
-    index = self._index
-    self._load_meta(meta_path)
+    self.load_meta(meta_path)
     self._index = {}
     imgs_meta = self.images[:]
     log.debug("   '%s': %d images", self.name, len(imgs_meta))

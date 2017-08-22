@@ -82,12 +82,15 @@ class Spectrofoto(object):
     if seed is None: seed = time.time()
     log.info("initializing new song with estim: %s and seed: %s",
              estim.id, seed)
-    self.song = song.Song(estim, (self.__class__.__name__, __version__))
+    self.song = song.Song()
+    self.song.estim = estim
+    self.song.comp  = (self.__class__.__name__, __version__)
     log.debug("   song id is %s", self.song.id)
     self.song.seed = seed
     random.seed(self.song.seed)
     self.song.images = [i.resize((192, 192), Image.ANTIALIAS)
                         for i in self.song.estim.images]
+    self.song.img_idx = [img.info['id'] for img in self.song.images]
     self.song.img_medians = {}
     self._save_runfile(5)
     self.song.tmpd = os.path.join(oe3_path, 'tmp/comp', self.song.id + '.tmp')
@@ -1000,12 +1003,12 @@ class Spectrofoto(object):
 
     # XXX clean up...
     log.info("wrapping song")
-    sid  = self.song.id
-    base = os.path.join(oe3_path, 'var/opus', sid)
-    wpath, mpath = base + '.wav', base + '.pyd.bz2'
+    sid   = self.song.id
+    base  = os.path.join(oe3_path, 'var/opus', sid)
+    wpath = base + '.wav'
 
     # move wav
-    log.debug("   moving wav to %s", wpath)
+    log.debug("   moving wav from %s to %s", self.song.sfile, wpath)
     os.rename(self.song.sfile, wpath)
     self.song.sfile = wpath
 
@@ -1019,22 +1022,18 @@ class Spectrofoto(object):
     tarfile.open(sid + '.tar', 'w').add(sid)
 
     # copy estim
+    # XXX this is NOT working!
     epath = os.path.join(base, self.song.estim.id + '.pyd.bz2')
     log.debug("   copying estim to %s", epath)
     self.song.estim.save(epath)
 
     # save metadata
     # XXX should save opus number in song and comp state
-    log.debug("   saving metadata to %s", mpath)
     wparams = wave.open(wpath, 'r').getparams()
     self.song.dur = wparams[3] / wparams[2]
-    meta = dict((k, v) for k, v in self.song.__dict__.iteritems() if k in
-                ('anal', 'choices', 'comp', 'dur', 'id', 'img_anomaly',
-                 'img_distances', 'img_idx', 'img_medians', 'seed'))
-    meta['estim_id']   = self.song.estim.id
-    meta['estim_name'] = self.song.estim.name
-    meta['sfile'] = sid + '.ogg'
-    utils.save_bzdict(mpath, meta)
+    self.song.img_reduxes = {i.info['id']:i.info['redux']
+                             for i in self.song.images}
+    self.song.save_meta(base + '.pyd.bz2')
 
     # encode wav
     log.debug("   oggencoding ...")
@@ -1119,16 +1118,15 @@ class Spectrofoto(object):
       log.debug("   clearing comp runfile...")
       return  # shortcircuit
     #log.debug("   updating comp runfile...")
-    dict_ = {k: v for k, v in self.song.__dict__.items() if k in
-                ('anal', 'choices', 'comp', 'dur', 'id', 'img_anomaly',
-                 'img_distances', 'img_idx', 'img_medians', 'seed')}
-    dict_['estim_id']   = self.song.estim.id
-    dict_['estim_name'] = self.song.estim.name
-    dict_['images']     = [img.info['id'] for img in self.song.images]
-    dict_['reduxes']    = {i.info['id']:i.info['redux']
+    meta = {k: v for k, v in self.song.__dict__.items() if k in
+            ('anal', 'choices', 'comp', 'dur', 'id', 'img_anomaly',
+             'img_distances', 'img_idx', 'img_medians', 'seed')}
+    meta['estim_id']   = self.song.estim.id
+    meta['estim_name'] = self.song.estim.name
+    meta['reduxes']    = {i.info['id']:i.info['redux']
                          for i in self.song.images}
-    dict_['progress']   = prog
-    utils.save_runfile('comp', dict_)
+    meta['progress']   = prog
+    utils.save_runfile('comp', meta)
     if self.conf['sleep_on_update'] != 0:
       time.sleep(self.conf['sleep_on_update'])
 

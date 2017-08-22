@@ -74,11 +74,14 @@ def main(argv = sys.argv):
           _print_clear()
           dirty = False
       elif arrow.get(getmtime(path)) > checks[running]:
-        dict_ = utils.load_json(path)
-        checks[module] = arrow.now()
-        os.system('clear')
-        eval("_print_{module}(dict_)".format(module=module))
-        dirty = True
+        try:
+          meta = utils.load_json(path)
+          checks[module] = arrow.now()
+          os.system('clear')
+          eval("_print_{module}(meta)".format(module=module))
+          dirty = True
+        except:
+          pass
 
       time.sleep(0.1)
 
@@ -96,50 +99,53 @@ def _print_clear():
   ))
 
 
-def _print_comp(dict_):
+def _print_comp(meta):
   """print comp state: song meta, estim reduxes, choices, progress"""
 
-  reduxes = [dict_['reduxes'][img] for img in dict_['images']]
-  _print_comp_header(dict_)
+  if 'img_idx' in meta:
+    reduxes = [meta['reduxes'][img] for img in meta['img_idx']]
+  else:
+    reduxes = []
+  _print_comp_header(meta)
   _print_reduxes(reduxes[:51])  # XXX to-do: decide how to show bigger colls
-  _print_comp_footer(dict_)
-  _print_progress(dict_['progress'])
+  _print_comp_footer(meta)
+  _print_progress(meta['progress'])
   sys.stdout.flush()
 
 
-def _print_interp(dict_):
+def _print_interp(meta):
   """print interp state: song meta, estim reduxes, choices, fake progress"""
 
-  reduxes = [dict_['reduxes'][img] for img in dict_['images']]
-  dur     = int(dict_['duration'])
+  reduxes = [meta['reduxes'][img] for img in meta['img_idx']]
+  dur     = int(meta['duration'])
   for i in xrange(dur + 1):
     os.system('clear')
-    _print_interp_header(dict_)
+    _print_interp_header(meta)
     _print_reduxes(reduxes[:51])  # XXX to-do: decide how to show bigger colls
-    _print_comp_footer(dict_)
+    _print_comp_footer(meta)
     _print_progress(min(i * 100 / dur, 100))
     sys.stdout.flush()
     time.sleep(0.75)
   while exists('run/interp.son'): time.sleep(0.1)
 
 
-def _print_comp_header(dict_):
+def _print_comp_header(meta):
   """print song metadata"""
 
   header = "{subcomp} · {estim_name} ⎡{estim_id}⎦".format(
-    subcomp    = dict_['comp'][0].lower(),
-    estim_name = dict_['estim_name'],
-    estim_id   = dict_['estim_id']
+    subcomp    = meta['comp'][0].lower(),
+    estim_name = meta['estim_name'],
+    estim_id   = meta['estim_id']
   )
   print("{}{:^{}}{}".format(
     _setf(_conf['text_colors'][1]), header, _cols, _sgr0()))
 
 
-def _print_comp_footer(dict_):
+def _print_comp_footer(meta):
   """print pretty comp choices"""
 
-  if 'choices' in dict_:
-    choice_l = pformat_choices(dict_['choices'], joined=False)
+  if 'choices' in meta:
+    choice_l = pformat_choices(meta['choices'], joined=False)
     termed   = ''
     for choice in choice_l:
       tmp, cert = choice.split('.')
@@ -155,7 +161,7 @@ def _print_comp_footer(dict_):
     pad = ' ' * ((_cols - 87) // 2)
 
   else:
-    termed = "‹nochoices›"
+    termed = "⎡nochoices⎦"
     # width: 11
     pad = ' ' * ((_cols - 11) // 2)
 
@@ -163,14 +169,14 @@ def _print_comp_footer(dict_):
     pad, _setf(_conf['text_colors'][1]), termed, _sgr0()))
 
 
-def _print_interp_header(dict_):
+def _print_interp_header(meta):
   """print song metadata"""
 
   header = "{subcomp} · {song} ⎡{estim}⎦ · {duration}".format(
-    subcomp  = dict_['comp'][0].lower(),
-    song     = dict_['id'],
-    estim    = dict_['estim_name'],
-    duration = utils.secs2mmss(dict_['duration']).strip()
+    subcomp  = meta['comp'][0].lower(),
+    song     = meta['id'],
+    estim    = meta['estim_name'],
+    duration = utils.secs2mmss(meta['duration']).strip()
   )
   print("{}{:^{}}{}".format(
     _setf(_conf['text_colors'][1]), header, _cols, _sgr0()))
@@ -200,7 +206,10 @@ def _print_reduxes(reduxes):
   """show pretty reduxes"""
 
   len_reduxes = len(reduxes)
-  if len_reduxes < 11:
+  if len_reduxes == 0:
+    print("\n\n\n\n{}{}⎡noestim⎦\n\n\n\n".format(
+      _setf(_conf['text_colors'][1]), ' ' * ((_cols - 9) // 2)))
+  elif len_reduxes < 11:
     print('\n\n')               # three lines
     _print_redux_line(reduxes)
     print('\n\n')               # three lines

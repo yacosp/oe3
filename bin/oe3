@@ -15,16 +15,17 @@ oe3 comp runner
 usage: bin/oe3 [options]
 
 options:
-  -c, --choices=CHOICES     forced choices, ie: 'timbres:bps,sort:none'
-  -d, --pdb                 run through pdb
-  -e, --estim=ESTIM_PATH    use ESTIM_PATH instead of a gatil-chosen one
-  -i, --show-images         show images instead of reduxes
-  -l, --list                list songs with rewards
-  -m, --min-song-dur=S      min song dur (seconds)
-  -M, --max-song-dur=S      max song dur (seconds)
-  -n, --count               number of times to run
-  -R, --no-reward           don't wait for reward
-  -h, --help                show this help message and exit
+  -c, --choices=CHOICES        forced choices, ie: 'timbres:bps,sort:none'
+  -d, --pdb                    run through pdb
+  -e, --estim=ESTIM_META       use fixed estim instead of a gatil-chosen one
+  -i, --show-images            show images instead of reduxes
+  -l, --list                   list songs with rewards
+  -m, --min-song-dur=S         min song dur (seconds)
+  -M, --max-song-dur=S         max song dur (seconds)
+  -n, --count                  number of times to run
+  -r, --reward=SONG[,SONG...]  play song(s) and ask for reward
+  -R, --no-reward              don't wait for reward
+  -h, --help                   show this help message and exit
 """
 
 
@@ -44,15 +45,13 @@ from glob   import glob
 from pprint import pformat
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/../lib"))
-from oe3 import anatta, utils
+from oe3 import anatta, oe3_path, opus, utils
 from oe3.coag import core as coag
 from oe3.coag import estim
 from oe3.comp import spectrofoto
 from oe3.comp.spectrofoto import tbr_pretty
 from oe3.crit import REWARDS
 
-sf  = None
-sv  = None
 log = logging.getLogger('oe3')
 
 #------------------------------------------------------------------------------
@@ -62,10 +61,10 @@ def main(argv=None):
   # parse command line options
   try:
     opts, args = getopt.getopt(argv[1:],
-                               "c:de:ilm:M:n:Rh",
+                               "c:de:ilm:M:n:r:Rh",
                                ["choices=", "pdb", "estim=",
                                 "show-images", "list", "min-song-dur=",
-                                "max-song-dur=", "count=",
+                                "max-song-dur=", "count=", "reward=",
                                 "no-reward", "help"])
   except getopt.error, msg:
     print msg
@@ -81,6 +80,7 @@ def main(argv=None):
   min_sd      = None
   max_sd      = None
   count       = 1
+  rwd_song_l  = None
   no_reward   = False
 
   # process options
@@ -101,6 +101,8 @@ def main(argv=None):
       max_sd = int(a)
     elif o in ("-n", "--count"):
       count = int(a)
+    elif o in ("-r", "--reward"):
+      rwd_song_l = _parse_rwd_song_l(a)
     elif o in ("-R", "--no-reward"):
       no_reward = True
     elif o in ("-h", "--help"):
@@ -112,7 +114,16 @@ def main(argv=None):
     _list_songs()
     return 0
 
-  # run oe3
+  # reward
+  if rwd_song_l is not None:
+    try:
+      _reward_songs(rwd_song_l)
+      return 0
+    except KeyboardInterrupt:
+      log.warning("interrupted!")
+      return 130
+
+  # run comp
   if use_pdb: pdb.set_trace()
   cg = coag.Coag()
   for i in range(count):
@@ -137,7 +148,6 @@ def _run_spectrofoto(ice=None, choices=None, show_images=False, min_sd=None,
                    max_sd=None, no_reward=False):
   """create one song"""
 
-  global sf
   gc.collect()
   log.info("running comp...")
   sf = spectrofoto.Spectrofoto()
@@ -157,14 +167,13 @@ def _list_songs():
 
   # header
   headers = [('song', 15), ('estim', 35), ('opus', 4),
-             ('tbr', 3),   ('dur', 9),    ('rew', 3)]
+             ('tbr', 3),   ('dur', 9),    ('rwd', 3)]
   print("oe3:{} opus list:\n".format(anatta['name']))
   print('  '.join([("{:{}}" if t != 'dur' else "{:^{}}").format(t, w)
                    for (t, w) in headers]))
   print('  '.join(map(lambda x: '-' * x, [w for (t, w) in headers])))
 
   # song list
-  rews  = 0
   opus  = 0
   for path in sorted(glob('var/opus/*.pyd.bz2')):
     meta    = utils.load_bzdict(path)
@@ -182,27 +191,40 @@ def _list_songs():
   print('')
 
 #------------------------------------------------------------------------------
+def _reward_songs(song_l):
+  """play a song and ask for reward"""
+  sf = spectrofoto.Spectrofoto()
+  for song_id in song_l:
+    song = opus.song.Song(
+      os.path.join('var/opus', song_id + '.pyd.bz2'))
+    _play_song(song)
+    sf.learn(song, _get_reward())
+    print('')
+
+#------------------------------------------------------------------------------
 def _play_song(song):
   """play a song"""
 
   # XXX this should be the interp!
-  log.info("playing song...")
-  print "song:     ", song.id
-  mdur = max(t['dur'] for t in song.tracklist.values() if t is not None)
-  dict_ = {
-    'comp':       song.__dict__['comp'],
-    'id':         song.__dict__['id'],
+  log.info("playing song {}...".format(song.id))
+  print "song:    ", song.id
+  #mdur = max(t['dur'] for t in song.tracklist.values() if t is not None)
+  meta = {
+    'comp':       song.comp,
+    'id':         song.id,
     'estim_id':   song.estim.id,
     'estim_name': song.estim.name,
-    'images':     [img.info['id'] for img in song.images],
-    'reduxes':    {i.info['id']:i.info['redux'] for i in song.images},
-    'choices':    song.__dict__['choices'],
-    'duration':   mdur,
+    'img_idx':    song.img_idx,
+    'reduxes':    song.img_reduxes,
+    'choices':    song.choices,
+    'duration':   song.dur,
     'progress':   5,
   }
-  utils.save_runfile('interp', dict_)
-  print "duration: %s" % (utils.secs2mmss(mdur))
-  print "playing:  %s" % song.sfile
+  utils.save_runfile('interp', meta)
+  print "duration:", (utils.secs2mmss(song.dur).strip())
+  if '/' not in song.sfile:
+    song.sfile = oe3_path + '/var/opus/' + song.sfile
+  print "playing: ", song.sfile
   utils.shexec("ogg123 %s", song.sfile)
   time.sleep(.5)
   utils.save_runfile('interp', {})
@@ -219,6 +241,12 @@ def _get_reward():
     pdb.set_trace()
   if rwd in ("q", ""): sys.exit(2)
   return (REWARDS[int(rwd) - 1], None, None)
+
+#------------------------------------------------------------------------------
+def _parse_rwd_song_l(argstr):
+  """parse the --reward option value"""
+  song_l = argstr.split(',')
+  return song_l
 
 #------------------------------------------------------------------------------
 if __name__ == "__main__":

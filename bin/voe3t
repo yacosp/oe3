@@ -17,5 +17,5 @@
 
 tmux -f etc/voe3t-tmux.conf \
      new-session  -svoe3t -nvoe3t 'bin/logtails -n100 -f var/log/oe3.log'\; \
-     split-window -bv -l13        'bin/statewatch'\; \
+     split-window -bv -l12        'bin/statewatch'\; \
      split-window -bh -l80        'bash --rcfile etc/voe3t-bashrc'

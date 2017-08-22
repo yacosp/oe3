@@ -9,13 +9,13 @@ ResetColor="\e[0;0m"
 source env/bin/activate
 
 # voe3 prompt
-export PS1="${BrightBlue}\A▸${ResetColor} "
+export PS1="\[${BrightBlue}\]\A·\[${ResetColor}\] "
 
 # motd / header
 read anatta bdate btime <<<$(python etc/voe3t-anatta.py)
 opus=`ls var/opus/*.tar | wc -l`
 estims=`ls var/estim/*.tar | wc -l`
-printf -v h1 'oe3.1:idwgu tmux runner %57s' "oe3:${anatta} [${estims}e·${opus}o]"
+printf -v h1 'oe3.1:idwgu tmux runner %61s' "oe3:${anatta} ⎡${estims}e·${opus}o⎦"
 printf -v h2 '%80s' "${bdate} ${btime}"
 echo -e "${BrightBlue}${h1}"
 echo -e "${Blue}${h2}${ResetColor}"

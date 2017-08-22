@@ -141,17 +141,17 @@ def load_runfile(module):
   return load_json(os.path.join(oe3_path,
                                 _conf['runfile_dir'], module + '.json'))
 
-def save_runfile(module, dict_):
+def save_runfile(module, meta):
   """save state data to runfile"""
   path = os.path.join(oe3_path, _conf['runfile_dir'], module + '.json')
-  if dict_ != {}:
-    dict_['module']  = module
-    dict_['updated'] = arrow.utcnow().format('YYYYMMDD.HHmmss.SSS')
+  if meta != {}:
+    meta['module']  = module
+    meta['updated'] = arrow.utcnow().format('YYYYMMDD.HHmmss.SSS')
     if os.path.isfile(path) and False:
       os.rename(
         path, "{}~{}".format(path, arrow.now().format('YYYYMMDD.HHmmss.SSS'))
       )
-    save_json(path, dict_)
+    save_json(path, meta)
   else:
     os.remove(path)
 
