@@ -16,3 +16,8 @@ oe3 mini-howto
 5. send me an email to yaco@yaco.net. yes, this is required ;)
 
 6. explore options, read code, mess with it. have fun, keep sending emails!
+
+
+as an alternative to the three first steps, you can run bin/voe4t from a term
+emulator, which will open a tmux session with a viewer and logtail. you can
+execute comands from the shell at the top left pane.
