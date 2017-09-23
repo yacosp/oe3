@@ -1,0 +1,8 @@
+-------------------------------------------------------------------------------
+oe3 ideas
+-------------------------------------------------------------------------------
+
+* oe3.2:beat
+  * add subchoices for timbres, ie: sinoid can choose range/curve, picspec
+    enscribe hiss/buzz, etc.
+  * add timbre: glitchbeat. subchoices: accent map, probability map, timbres
