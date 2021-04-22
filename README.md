@@ -22,6 +22,11 @@ milestones:
 - concerts: lima, buenos aires, kitsune (second life), córdoba, madrid, salamanca, resistencia.
 - conferences: lima, buenos aires, san jose (california), madrid.
 - on stand-by since 2009
+- published works:
+  - [oe3:op63](https://soundcloud.com/yaco/oe3-op63) in "rmc", CDr, 2006.
+  - [achik](https://soundcloud.com/yaco/achik-2020-remaster) in [Ejercicios de desolación Artificial III](https://www.discogs.com/Various-Ejercicios-De-Desolaci%C3%B3n-Artificial-III/release/15312127), [Aloardí](http://www.aloardi.org), 2007.
+  - [vlv3:ta](https://soundcloud.com/yaco/vlv3_ta) in [compilación de audio #01, 2007](https://www.discogs.com/Various-Compilaci%C3%B3n-De-Audio-01-2007/release/15312419), [Sudaméricaelectrónica](https://sudamericaelectronica.bandcamp.com/), 2007.
+  - [mía1:tv](https://yaco.bandcamp.com/track/m-a1-tv), [mía3:ty](https://yaco.bandcamp.com/track/m-a3-ty) y [mía8:ccht](https://yaco.bandcamp.com/track/m-a8-ccht) in [retumbares](https://yaco.bandcamp.com/album/retumbares), 2018.
 
 people & orgs:  
 [azul](http://azuldemadrugada.tumblr.com), [fermín](http://blog.yaco.net/in-memoriam/), [jorge haro](http://www.jorgeharo.com.ar/), [christian galarreta](http://sajjra.net/chrs/) / [aloardí](http://www.aloardi.org/), [juan miguel santos](https://www.itba.edu.ar/la-universidad/docentes/juan-miguel-santos/), lucas, [javier piñango](http://www.experimentaclub.com/i_r_real.htm) / [experimentaclub](http://www.experimentaclub.com/fest08.htm), [alma laprida](http://almalaprida.com.ar/)
