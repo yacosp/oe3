@@ -9,9 +9,9 @@ _adult fan of..._
 
 -------
 
-**oe3:afol** is a non-interactive music creation program. the basic use pattern is to run it, wait for it to create some noise, listen, and then give it a reward/valoration so the systen starts to get some experience.
+**oe3:afol** is a non-interactive music creation program. the basic use pattern is to run it, wait for it to create some noise, listen, and then give it a reward/valoration so the system starts to get some experience.
 
-information about runnint the program for the first time can be found at docs/INSTALL. it should work on any recent GNU/Linux system, the DEPENDENCIES file can help in setting up the environment.
+information about running the program for the first time can be found at docs/INSTALL. it should work on any recent GNU/Linux system, the DEPENDENCIES file can help in setting up the environment.
 
 objectives:
 - [x] able to learn
@@ -21,7 +21,7 @@ milestones:
 - first composition: rimac, lima, 20060701.232019, the night before its first live concert at VAE10.
 - concerts: lima, buenos aires, kitsune (second life), córdoba, madrid, salamanca, resistencia.
 - conferences: lima, buenos aires, san jose (california), madrid.
-- hiatus: 2009 to 2016
+- on stand-by since 2009
 
 people & orgs:  
 [azul](http://azuldemadrugada.tumblr.com), [fermín](http://blog.yaco.net/in-memoriam/), [jorge haro](http://www.jorgeharo.com.ar/), [christian galarreta](http://sajjra.net/chrs/) / [aloardí](http://www.aloardi.org/), [juan miguel santos](https://www.itba.edu.ar/la-universidad/docentes/juan-miguel-santos/), lucas, [javier piñango](http://www.experimentaclub.com/i_r_real.htm) / [experimentaclub](http://www.experimentaclub.com/fest08.htm), [alma laprida](http://almalaprida.com.ar/)
@@ -32,8 +32,6 @@ enhancements:
 
 problems:
 - too human-dependent! (so... [oe4:nanoclts](https://github.com/yacosp/oe4))
-
-[![Ready](https://badge.waffle.io/yacosp/oe3.png?label=ready&title=Ready)](https://waffle.io/yacosp/oe3?utm_source=badge) [![In Progress](https://badge.waffle.io/yacosp/oe3.svg?label=in%20progress&title=In%20Progress)](http://waffle.io/yacosp/oe3)
 
 -------
 
